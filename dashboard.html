@@ -6,6 +6,8 @@
     <title>Dashboard do Cliente - Aproxime Aqui Eventos</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -217,7 +219,7 @@
                 </button>
             </div>
 
-            <form onsubmit="handleCreateUser(event)" class="space-y-4">
+            <form id="userForm" onsubmit="handleCreateUser(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome Completo *</label>
                     <input type="text" id="userName" required placeholder="Ex: Carlos Silva" 
@@ -237,10 +239,11 @@
                     </div>
                 </div>
 
+                <!-- CAMPO DE UPLOAD DE ARQUIVO DA FOTO -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">URL da Foto (Opcional)</label>
-                    <input type="url" id="userPhotoUrl" placeholder="https://..." 
-                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Foto de Perfil (Arquivo)</label>
+                    <input type="file" id="userPhotoFile" accept="image/*" 
+                        class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700/60 rounded-xl text-slate-300 text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/30 file:text-indigo-300 hover:file:bg-indigo-600/50 cursor-pointer">
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3 border-t border-slate-800">
@@ -258,6 +261,12 @@
     <!-- JS de Controle das 3 Abas e Conexão com API -->
     <script>
         const API_BASE_URL = "https://aproxime-aqui-eventos-api.onrender.com";
+        
+        // CONFIGURAÇÕES DO SUPABASE STORAGE
+        const SUPABASE_URL = "https://bosjqefiyodvzjqevfbj.supabase.co";
+        const SUPABASE_ANON_KEY = "SUA_SUPABASE_ANON_KEY_AQUI"; // Certifique-se de preencher com a sua chave pública (anon)
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let globalUsers = [];
         let globalEvents = [];
 
@@ -312,7 +321,7 @@
 
         function renderUsersTable(users) {
             const tbody = document.getElementById("usersTableBody");
-            if (users.length === 0) {
+            if (!users || users.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum usuário cadastrado ainda.</td></tr>`;
                 return;
             }
@@ -377,36 +386,91 @@
             }
         }
 
-        function openUserModal() { document.getElementById("userModal").classList.remove("hidden"); }
+        function openUserModal() { 
+            document.getElementById("userForm").reset();
+            document.getElementById("userModal").classList.remove("hidden"); 
+        }
         function closeUserModal() { document.getElementById("userModal").classList.add("hidden"); }
 
+        // Lógica de Upload da Imagem para o Supabase Storage
+        async function uploadPhotoToSupabase(file) {
+            if (!file) return null;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `users/${fileName}`;
+
+            const { data, error } = await supabaseClient.storage
+                .from('avatars')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) {
+                console.error("Erro no upload do Supabase Storage:", error);
+                throw new Error("Falha ao enviar a foto do participante.");
+            }
+
+            const { data: publicUrlData } = supabaseClient.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            return publicUrlData.publicUrl;
+        }
+
+        // Submissão de Cadastro do Usuário
         async function handleCreateUser(e) {
             e.preventDefault();
-            const payload = {
-                name: document.getElementById("userName").value,
-                document: document.getElementById("userDocument").value || null,
-                code: document.getElementById("userCode").value || null,
-                photo_url: document.getElementById("userPhotoUrl").value || null
-            };
 
-            const res = await fetch(`${API_BASE_URL}/v1/admin/users`, {
-                method: "POST",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(payload)
-            });
+            const btn = document.getElementById("btnSaveUser");
+            const photoFileInput = document.getElementById("userPhotoFile");
+            const selectedFile = photoFileInput.files[0];
 
-            if (res.ok) {
-                closeUserModal();
-                loadUsers();
-            } else {
-                alert("Erro ao cadastrar usuário.");
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Enviando foto...`;
+
+            try {
+                let uploadedPhotoUrl = null;
+
+                if (selectedFile) {
+                    uploadedPhotoUrl = await uploadPhotoToSupabase(selectedFile);
+                }
+
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando dados...`;
+
+                const payload = {
+                    name: document.getElementById("userName").value,
+                    document: document.getElementById("userDocument").value || null,
+                    code: document.getElementById("userCode").value || null,
+                    photo_url: uploadedPhotoUrl
+                };
+
+                const res = await fetch(`${API_BASE_URL}/v1/admin/users`, {
+                    method: "POST",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeUserModal();
+                    loadUsers();
+                } else {
+                    const errData = await res.json();
+                    alert(errData.detail || "Erro ao cadastrar usuário.");
+                }
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Salvar Pessoa</span>`;
             }
         }
 
         // ================= ABA 2: CRIAR EVENTO =================
         function renderUsersChecklist(users) {
             const container = document.getElementById("eventUsersChecklist");
-            if (users.length === 0) {
+            if (!users || users.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Cadastre pessoas na Aba 1 primeiro.</p>`;
                 return;
             }
@@ -477,7 +541,7 @@
                 const res = await fetch(`${API_BASE_URL}/v1/admin/events/${eventId}/participants`, { headers: getAuthHeaders() });
                 const participants = await res.json();
 
-                if (participants.length === 0) {
+                if (!participants || participants.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500">Nenhum participante vinculado a este evento.</td></tr>`;
                     return;
                 }
