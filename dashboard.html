@@ -402,7 +402,6 @@
             `).join("");
         }
 
-        // Função para gerar uma hash aleatória única (Hexadecimal de 16 caracteres)
         function generateRandomTagUID() {
             const array = new Uint8Array(8);
             crypto.getRandomValues(array);
@@ -452,7 +451,6 @@
         }
         function closeUserModal() { document.getElementById("userModal").classList.add("hidden"); }
 
-        // Lógica de Upload da Imagem para o Supabase Storage
         async function uploadPhotoToSupabase(file) {
             if (!file) return null;
 
@@ -480,7 +478,6 @@
             return publicUrlData.publicUrl;
         }
 
-        // Submissão de Cadastro do Usuário
         async function handleCreateUser(e) {
             e.preventDefault();
 
@@ -528,7 +525,29 @@
             }
         }
 
-        // ================= ABA 2: CRIAR EVENTO =================
+        // ================= ABA 2 & 3: EVENTOS =================
+        async function loadEvents() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/v1/admin/events`, { headers: getAuthHeaders() });
+                globalEvents = await res.json();
+                renderEventsSelect(globalEvents);
+            } catch (err) {
+                console.error("Erro ao carregar eventos:", err);
+            }
+        }
+
+        function renderEventsSelect(events) {
+            const select = document.getElementById("selectManageEvent");
+            if (!events || events.length === 0) {
+                select.innerHTML = `<option value="">-- Nenhum Evento Encontrado --</option>`;
+                return;
+            }
+
+            let options = `<option value="">-- Selecione um Evento --</option>`;
+            options += events.map(e => `<option value="${e.id}">${e.title} (${e.event_date || 'Sem data'})</option>`).join("");
+            select.innerHTML = options;
+        }
+
         function renderUsersChecklist(users) {
             const container = document.getElementById("eventUsersChecklist");
             if (!users || users.length === 0) {
@@ -552,7 +571,6 @@
         async function handleCreateEvent(e) {
             e.preventDefault();
             const selectedUserIds = Array.from(document.querySelectorAll(".user-event-checkbox:checked")).map(cb => cb.value);
-
             const rawDate = document.getElementById("eventDate").value;
 
             const payload = {
@@ -571,7 +589,7 @@
 
                 if (res.ok) {
                     alert("Evento criado com sucesso!");
-                    loadEvents();
+                    await loadEvents();
                     switchTab("tab3");
                 } else {
                     const errData = await res.json();
@@ -657,7 +675,6 @@
                 });
 
                 if (res.ok) {
-                    // Atualiza localmente o status no array sem precisar recarregar a tela toda
                     const item = globalParticipants.find(p => p.user_id === userId);
                     if (item) item.enabled_in_event = newStatus;
                     filterParticipants();
