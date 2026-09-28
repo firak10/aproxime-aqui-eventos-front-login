@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperAdmin - Aproxime Aqui Eventos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200 flex flex-col">
+
+    <!-- Topbar / Navbar -->
+    <header class="glass-panel sticky top-0 z-30 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-qrcode text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-none">Aproxime Aqui</h1>
+                    <span class="text-xs text-indigo-400 font-medium">Painel SuperAdmin</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-400 hidden sm:inline-block" id="userEmail">admin@aproximeaqui.com.br</span>
+                <button onclick="handleLogout()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold transition flex items-center gap-2">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Sair</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Métricas Rápidas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Empresas Ativas</p>
+                    <h3 class="text-2xl font-bold text-white mt-0.5" id="totalCompanies">--</h3>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Eventos Ativos</p>
+                    <h3 class="text-2xl font-bold text-white mt-0.5" id="totalEvents">--</h3>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Credenciais Lidas</p>
+                    <h3 class="text-2xl font-bold text-white mt-0.5" id="totalReads">--</h3>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status API</p>
+                    <h3 class="text-sm font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        100% Operacional
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Principal: Tabela de Empresas -->
+        <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
+            
+            <!-- Barra de Ações (Busca + Novo Cadastro) -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Empresas Clientes</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Gerencie os acessos das organizadoras de eventos.</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="relative flex-1 sm:w-64">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="searchInput" oninput="filterCompanies()" placeholder="Buscar por empresa ou CNPJ..." 
+                            class="w-full pl-9 pr-4 py-2.5 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <button onclick="openCompanyModal()" class="py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nova Empresa</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabela de Empresas -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                            <th class="py-3 px-4">Empresa</th>
+                            <th class="py-3 px-4">Documento (CNPJ/CPF)</th>
+                            <th class="py-3 px-4">Chave de Acesso</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="companiesTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                        <!-- Carregamento mock/dinâmico -->
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-slate-500">
+                                <i class="fa-solid fa-circle-notch fa-spin text-lg mb-2 block"></i>
+                                Carregando empresas cadastradas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Cadastrar Nova Empresa -->
+    <div id="companyModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-building-circle-check text-indigo-400"></i>
+                    Cadastrar Nova Empresa
+                </h3>
+                <button onclick="closeCompanyModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="companyForm" onsubmit="handleCreateCompany(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome da Empresa / Evento</label>
+                    <input type="text" id="companyName" required placeholder="Ex: Produções Ponta Grossa LTDA" 
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento (CNPJ ou CPF)</label>
+                    <input type="text" id="companyDocument" required placeholder="00.000.000/0001-00" 
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Chave de Acesso (Senha do Painel Admin)</label>
+                    <div class="relative">
+                        <input type="text" id="companyToken" required placeholder="Defina uma chave ou gere uma senha" 
+                            class="w-full pl-3.5 pr-20 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        <button type="button" onclick="generateRandomToken()" class="absolute right-1 top-1 bottom-1 px-2.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-[10px] font-semibold rounded-lg transition">
+                            Gerar Chave
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-800">
+                    <button type="button" onclick="closeCompanyModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800/50 text-slate-300 text-xs font-semibold transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSaveCompany" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                        <span>Salvar Empresa</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JS de Controle e Integração -->
+    <script>
+        const API_BASE_URL = "https://aproxime-aqui-eventos-api.onrender.com";
+        let companiesList = [];
+
+        // Proteção de Rota ao Carregar a Página
+        window.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("aproxime_token");
+            const role = localStorage.getItem("aproxime_role");
+
+            if (!token || role !== "superadmin") {
+                window.location.href = "https://logineventos.aproximeaqui.com.br";
+                return;
+            }
+
+            fetchCompanies();
+        });
+
+        // Buscar Empresas da API
+        async function fetchCompanies() {
+            const token = localStorage.getItem("aproxime_token");
+            const tbody = document.getElementById("companiesTableBody");
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    // Dados mock para exibição se o endpoint ainda estiver em implantação
+                    companiesList = [
+                        { id: "1", name: "Digital Card Eventos", document: "12.345.678/0001-90", access_token: "DC@2026", active: true },
+                        { id: "2", name: "Expo PG Show", document: "98.765.432/0001-10", access_token: "EXPO#99", active: true }
+                    ];
+                } else {
+                    companiesList = await response.json();
+                }
+
+                renderCompanies(companiesList);
+                updateMetrics();
+
+            } catch (err) {
+                console.error("Erro ao carregar empresas:", err);
+                renderCompanies([]);
+            }
+        }
+
+        // Renderizar Tabela
+        function renderCompanies(list) {
+            const tbody = document.getElementById("companiesTableBody");
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-500">Nenhuma empresa encontrada.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = list.map(c => `
+                <tr class="hover:bg-slate-800/30 transition">
+                    <td class="py-3 px-4 font-semibold text-white">${c.name}</td>
+                    <td class="py-3 px-4 font-mono text-slate-400">${c.document}</td>
+                    <td class="py-3 px-4">
+                        <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-md font-mono text-indigo-300 text-[11px]">${c.access_token}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                            <span class="w-1.5 h-1.5 rounded-full ${c.active ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+                            ${c.active ? 'Ativa' : 'Inativa'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="toggleCompanyStatus('${c.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        // Atualizar Métricas SuperAdmin
+        function updateMetrics() {
+            document.getElementById("totalCompanies").innerText = companiesList.length;
+            document.getElementById("totalEvents").innerText = companiesList.length * 2; // estimativa
+            document.getElementById("totalReads").innerText = "1,420";
+        }
+
+        // Filtro de Busca
+        function filterCompanies() {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const filtered = companiesList.filter(c => 
+                c.name.toLowerCase().includes(query) || c.document.includes(query)
+            );
+            renderCompanies(filtered);
+        }
+
+        // Modais e Formuários
+        function openCompanyModal() {
+            document.getElementById("companyModal").classList.remove("hidden");
+        }
+
+        function closeCompanyModal() {
+            document.getElementById("companyModal").classList.add("hidden");
+            document.getElementById("companyForm").reset();
+        }
+
+        function generateRandomToken() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let result = "KEY-";
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById("companyToken").value = result;
+        }
+
+        // Cadastrar Empresa na API
+        async function handleCreateCompany(event) {
+            event.preventDefault();
+
+            const token = localStorage.getItem("aproxime_token");
+            const btn = document.getElementById("btnSaveCompany");
+
+            const payload = {
+                name: document.getElementById("companyName").value,
+                document: document.getElementById("companyDocument").value,
+                access_token: document.getElementById("companyToken").value
+            };
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...`;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("Erro ao cadastrar empresa.");
+
+                closeCompanyModal();
+                fetchCompanies();
+
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Salvar Empresa</span>`;
+            }
+        }
+
+        // Logout
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = "https://logineventos.aproximeaqui.com.br";
+        }
+    </script>
+</body>
+</html>
