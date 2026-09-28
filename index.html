@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aproxime Aqui - Eventos | Login</title>
-    <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -33,7 +30,6 @@
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-md">
-        <!-- Logo e Cabeçalho -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 mb-4 shadow-lg shadow-indigo-500/10">
                 <i class="fa-solid fa-qrcode text-3xl"></i>
@@ -42,17 +38,14 @@
             <p class="text-slate-400 text-sm mt-1">Plataforma de Gestão de Acesso & Eventos</p>
         </div>
 
-        <!-- Card de Login -->
         <div class="glass-card rounded-2xl p-8 shadow-2xl glow-effect transition-all duration-300">
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-6">
                 
-                <!-- Feedback de Erro -->
                 <div id="errorMessage" class="hidden p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm text-center flex items-center justify-center gap-2">
                     <i class="fa-solid fa-circle-exclamation"></i>
                     <span id="errorText">E-mail ou senha incorretos.</span>
                 </div>
 
-                <!-- Campo E-mail / Usuário -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">E-mail ou Documento</label>
                     <div class="relative">
@@ -64,7 +57,6 @@
                     </div>
                 </div>
 
-                <!-- Campo Senha -->
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Senha / Chave de Acesso</label>
@@ -81,7 +73,6 @@
                     </div>
                 </div>
 
-                <!-- Botão de Entrar -->
                 <button type="submit" id="btnSubmit" 
                     class="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 transition-all duration-200 flex items-center justify-center gap-2">
                     <span>Acessar Painel</span>
@@ -90,13 +81,11 @@
             </form>
         </div>
 
-        <!-- Footer -->
         <p class="text-center text-xs text-slate-500 mt-8">
             &copy; 2026 Digital Card / Aproxime Aqui. Todos os direitos reservados.
         </p>
     </div>
 
-    <!-- JS de Autenticação -->
     <script>
         // URL da sua API no Render
         const API_BASE_URL = "https://aproxime-aqui-eventos-api.onrender.com";
@@ -154,13 +143,11 @@
                 localStorage.setItem("aproxime_company_id", data.company_id || "");
                 localStorage.setItem("aproxime_company_name", data.company_name || "");
 
-                // Redirecionamento Inteligente baseado no Role
+                // Redirecionamento Inteligente baseado no Role (usando caminhos relativos)
                 if (data.role === "superadmin") {
-                    window.location.href = "https://superadmineventos.aproximeaqui.com.br"; 
-                    // Caso esteja testando localmente, troque por: window.location.href = "superadmin.html";
+                    window.location.href = "/superadmineventos.html";
                 } else if (data.role === "admin") {
-                    window.location.href = "https://admineventos.aproximeaqui.com.br"; 
-                    // Caso esteja testando localmente, troque por: window.location.href = "admin.html";
+                    window.location.href = "/admineventos.html";
                 } else {
                     throw new Error("Perfil de acesso não reconhecido.");
                 }
