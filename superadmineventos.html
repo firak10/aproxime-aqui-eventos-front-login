@@ -118,7 +118,7 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
-                        <input type="text" id="searchInput" oninput="filterCompanies()" placeholder="Buscar por empresa ou CNPJ..." 
+                        <input type="text" id="searchInput" oninput="filterCompanies()" placeholder="Buscar por empresa, e-mail ou documento..." 
                             class="w-full pl-9 pr-4 py-2.5 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                     </div>
 
@@ -135,14 +135,13 @@
                     <thead>
                         <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
                             <th class="py-3 px-4">Empresa</th>
-                            <th class="py-3 px-4">Documento (CNPJ/CPF)</th>
-                            <th class="py-3 px-4">Chave de Acesso</th>
+                            <th class="py-3 px-4">E-mail (Login)</th>
+                            <th class="py-3 px-4">Documento (Opcional)</th>
                             <th class="py-3 px-4">Status</th>
                             <th class="py-3 px-4 text-right">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="companiesTableBody" class="divide-y divide-slate-800/60 text-slate-300">
-                        <!-- Carregamento mock/dinâmico -->
                         <tr>
                             <td colspan="5" class="py-8 text-center text-slate-500">
                                 <i class="fa-solid fa-circle-notch fa-spin text-lg mb-2 block"></i>
@@ -170,24 +169,30 @@
 
             <form id="companyForm" onsubmit="handleCreateCompany(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome da Empresa / Evento</label>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome da Empresa / Evento *</label>
                     <input type="text" id="companyName" required placeholder="Ex: Produções Ponta Grossa LTDA" 
                         class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento (CNPJ ou CPF)</label>
-                    <input type="text" id="companyDocument" required placeholder="00.000.000/0001-00" 
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">E-mail de Login *</label>
+                    <input type="email" id="companyEmail" required placeholder="cliente@empresa.com" 
                         class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Chave de Acesso (Senha do Painel Admin)</label>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento (CNPJ/CPF - Opcional)</label>
+                    <input type="text" id="companyDocument" placeholder="00.000.000/0001-00" 
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Senha de Acesso *</label>
                     <div class="relative">
-                        <input type="text" id="companyToken" required placeholder="Defina uma chave ou gere uma senha" 
+                        <input type="password" id="companyPassword" required placeholder="Defina a senha de login da empresa" 
                             class="w-full pl-3.5 pr-20 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-                        <button type="button" onclick="generateRandomToken()" class="absolute right-1 top-1 bottom-1 px-2.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-[10px] font-semibold rounded-lg transition">
-                            Gerar Chave
+                        <button type="button" onclick="generateRandomPassword()" class="absolute right-1 top-1 bottom-1 px-2.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-[10px] font-semibold rounded-lg transition">
+                            Gerar Senha
                         </button>
                     </div>
                 </div>
@@ -225,21 +230,16 @@
         // Buscar Empresas da API
         async function fetchCompanies() {
             const token = localStorage.getItem("aproxime_token");
-            const tbody = document.getElementById("companiesTableBody");
 
             try {
                 const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
 
-                if (!response.ok) {
-                    // Dados mock para exibição se o endpoint ainda estiver em implantação
-                    companiesList = [
-                        { id: "1", name: "Digital Card Eventos", document: "12.345.678/0001-90", access_token: "DC@2026", active: true },
-                        { id: "2", name: "Expo PG Show", document: "98.765.432/0001-10", access_token: "EXPO#99", active: true }
-                    ];
-                } else {
+                if (response.ok) {
                     companiesList = await response.json();
+                } else {
+                    companiesList = [];
                 }
 
                 renderCompanies(companiesList);
@@ -267,10 +267,8 @@
             tbody.innerHTML = list.map(c => `
                 <tr class="hover:bg-slate-800/30 transition">
                     <td class="py-3 px-4 font-semibold text-white">${c.name}</td>
-                    <td class="py-3 px-4 font-mono text-slate-400">${c.document}</td>
-                    <td class="py-3 px-4">
-                        <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-md font-mono text-indigo-300 text-[11px]">${c.access_token}</span>
-                    </td>
+                    <td class="py-3 px-4 font-mono text-indigo-300 text-[11px]">${c.email || '--'}</td>
+                    <td class="py-3 px-4 font-mono text-slate-400">${c.document || '--'}</td>
                     <td class="py-3 px-4">
                         <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
                             <span class="w-1.5 h-1.5 rounded-full ${c.active ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
@@ -278,7 +276,7 @@
                         </span>
                     </td>
                     <td class="py-3 px-4 text-right">
-                        <button onclick="toggleCompanyStatus('${c.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition">
+                        <button onclick="toggleCompanyStatus('${c.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Alternar Status">
                             <i class="fa-solid fa-power-off"></i>
                         </button>
                     </td>
@@ -289,7 +287,7 @@
         // Atualizar Métricas SuperAdmin
         function updateMetrics() {
             document.getElementById("totalCompanies").innerText = companiesList.length;
-            document.getElementById("totalEvents").innerText = companiesList.length * 2; // estimativa
+            document.getElementById("totalEvents").innerText = companiesList.length * 2;
             document.getElementById("totalReads").innerText = "1,420";
         }
 
@@ -297,12 +295,14 @@
         function filterCompanies() {
             const query = document.getElementById("searchInput").value.toLowerCase();
             const filtered = companiesList.filter(c => 
-                c.name.toLowerCase().includes(query) || c.document.includes(query)
+                (c.name && c.name.toLowerCase().includes(query)) || 
+                (c.email && c.email.toLowerCase().includes(query)) ||
+                (c.document && c.document.includes(query))
             );
             renderCompanies(filtered);
         }
 
-        // Modais e Formuários
+        // Modais e Formulários
         function openCompanyModal() {
             document.getElementById("companyModal").classList.remove("hidden");
         }
@@ -312,13 +312,15 @@
             document.getElementById("companyForm").reset();
         }
 
-        function generateRandomToken() {
-            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-            let result = "KEY-";
-            for (let i = 0; i < 6; i++) {
+        function generateRandomPassword() {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$";
+            let result = "";
+            for (let i = 0; i < 10; i++) {
                 result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            document.getElementById("companyToken").value = result;
+            const passInput = document.getElementById("companyPassword");
+            passInput.type = "text";
+            passInput.value = result;
         }
 
         // Cadastrar Empresa na API
@@ -330,8 +332,9 @@
 
             const payload = {
                 name: document.getElementById("companyName").value,
-                document: document.getElementById("companyDocument").value,
-                access_token: document.getElementById("companyToken").value
+                email: document.getElementById("companyEmail").value,
+                document: document.getElementById("companyDocument").value || null,
+                password: document.getElementById("companyPassword").value
             };
 
             btn.disabled = true;
@@ -347,7 +350,10 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) throw new Error("Erro ao cadastrar empresa.");
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Erro ao cadastrar empresa.");
+                }
 
                 closeCompanyModal();
                 fetchCompanies();
