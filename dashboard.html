@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard do Cliente - Aproxime Aqui Eventos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .tab-btn.active {
+            background-color: rgba(99, 102, 241, 0.2);
+            border-color: rgba(129, 140, 248, 0.5);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200 flex flex-col">
+
+    <!-- Topbar -->
+    <header class="glass-panel sticky top-0 z-30 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-qrcode text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-none" id="companyTitle">Carregando Empresa...</h1>
+                    <span class="text-xs text-indigo-400 font-medium">Painel de Eventos & Acessos</span>
+                </div>
+            </div>
+
+            <button onclick="handleLogout()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold transition flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sair</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navegação de Abas -->
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+            <button onclick="switchTab('tab1')" id="btnTab1" class="tab-btn active px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-users"></i>
+                <span>1. Pessoas / Usuários</span>
+            </button>
+
+            <button onclick="switchTab('tab2')" id="btnTab2" class="tab-btn px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-calendar-plus"></i>
+                <span>2. Criar Evento</span>
+            </button>
+
+            <button onclick="switchTab('tab3')" id="btnTab3" class="tab-btn px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i>
+                <span>3. Gestão de Eventos</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= ABA 1: CADASTRO E LISTAGEM DE USUÁRIOS ================= -->
+        <section id="tab1" class="tab-content space-y-6">
+            <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Base de Pessoas Cadastradas</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Gerencie o cadastro geral de participantes e vincule as TAGs NFC/RFID.</p>
+                    </div>
+
+                    <button onclick="openUserModal()" class="py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Novo Usuário</span>
+                    </button>
+                </div>
+
+                <!-- Tabela de Usuários -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                                <th class="py-3 px-4">Pessoa</th>
+                                <th class="py-3 px-4">Documento / Código</th>
+                                <th class="py-3 px-4">TAG / UID</th>
+                                <th class="py-3 px-4">Status Geral</th>
+                                <th class="py-3 px-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-slate-500">Carregando usuários...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= ABA 2: CRIAR EVENTO ================= -->
+        <section id="tab2" class="tab-content hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 shadow-xl max-w-3xl mx-auto space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Criar Novo Evento</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Defina os detalhes do evento e selecione quem já inicia habilitado.</p>
+                </div>
+
+                <form onsubmit="handleCreateEvent(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome do Evento</label>
+                        <input type="text" id="eventTitle" required placeholder="Ex: Convenção Anual 2026" 
+                            class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Data do Evento</label>
+                            <input type="date" id="eventDate" required 
+                                class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Descrição (Opcional)</label>
+                            <input type="text" id="eventDescription" placeholder="Ex: Acesso pela Entrada B" 
+                                class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Habilitar Pessoas Inicialmente</label>
+                            <button type="button" onclick="toggleSelectAllUsers()" class="text-[11px] text-indigo-400 hover:underline">Marcar / Desmarcar Todos</button>
+                        </div>
+                        <div id="eventUsersChecklist" class="max-h-60 overflow-y-auto bg-slate-900/60 border border-slate-800 rounded-xl p-3 space-y-2">
+                            <p class="text-xs text-slate-500">Carregando lista de pessoas...</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end">
+                        <button type="submit" id="btnSaveEvent" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Salvar e Criar Evento</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= ABA 3: GESTÃO DO EVENTO ================= -->
+        <section id="tab3" class="tab-content hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Gestão de Acesso por Evento</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Selecione o evento para ligar/desligar a permissão de entrada individual.</p>
+                    </div>
+
+                    <div class="w-full sm:w-72">
+                        <select id="selectManageEvent" onchange="loadEventParticipants()" 
+                            class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-indigo-500/40 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
+                            <option value="">-- Selecione um Evento --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tabela de Participantes do Evento -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                                <th class="py-3 px-4">Pessoa</th>
+                                <th class="py-3 px-4">Documento / Código</th>
+                                <th class="py-3 px-4">TAG / UID</th>
+                                <th class="py-3 px-4 text-center">Permissão no Evento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participantsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td colspan="4" class="py-8 text-center text-slate-500">Selecione um evento acima para gerenciar os acessos.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Cadastrar Novo Usuário (Aba 1) -->
+    <div id="userModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-indigo-400"></i>
+                    Cadastrar Nova Pessoa
+                </h3>
+                <button onclick="closeUserModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleCreateUser(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome Completo *</label>
+                    <input type="text" id="userName" required placeholder="Ex: Carlos Silva" 
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento (Opcional)</label>
+                        <input type="text" id="userDocument" placeholder="CPF / RG" 
+                            class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Código / Matrícula (Opcional)</label>
+                        <input type="text" id="userCode" placeholder="Ex: 1042" 
+                            class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">URL da Foto (Opcional)</label>
+                    <input type="url" id="userPhotoUrl" placeholder="https://..." 
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-800">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800/50 text-slate-300 text-xs font-semibold transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSaveUser" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                        <span>Salvar Pessoa</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JS de Controle das 3 Abas e Conexão com API -->
+    <script>
+        const API_BASE_URL = "https://aproxime-aqui-eventos-api.onrender.com";
+        let globalUsers = [];
+        let globalEvents = [];
+
+        // Inicialização e Proteção de Rota
+        window.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("aproxime_token");
+            const companyName = localStorage.getItem("aproxime_company_name");
+
+            if (!token) {
+                window.location.href = "/index.html";
+                return;
+            }
+
+            if (companyName) {
+                document.getElementById("companyTitle").innerText = companyName;
+            }
+
+            loadUsers();
+            loadEvents();
+        });
+
+        // Alternância de Abas
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+            document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+
+            document.getElementById(tabId).classList.remove("hidden");
+            if (tabId === 'tab1') document.getElementById("btnTab1").classList.add("active");
+            if (tabId === 'tab2') document.getElementById("btnTab2").classList.add("active");
+            if (tabId === 'tab3') document.getElementById("btnTab3").classList.add("active");
+        }
+
+        // Helper Headers Autorizados
+        function getAuthHeaders() {
+            return {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("aproxime_token")}`
+            };
+        }
+
+        // ================= ABA 1: CLIENTES / USUÁRIOS =================
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/v1/admin/users`, { headers: getAuthHeaders() });
+                globalUsers = await res.json();
+                renderUsersTable(globalUsers);
+                renderUsersChecklist(globalUsers);
+            } catch (err) {
+                console.error("Erro ao carregar usuários:", err);
+            }
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById("usersTableBody");
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum usuário cadastrado ainda.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => `
+                <tr class="hover:bg-slate-800/30 transition">
+                    <td class="py-3 px-4 font-semibold text-white flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
+                            ${u.photo_url ? `<img src="${u.photo_url}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-slate-500 text-xs"></i>`}
+                        </div>
+                        <span>${u.name}</span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-slate-400">${u.document || u.code || '--'}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-indigo-300 text-[11px] bg-slate-900 border border-slate-800 px-2 py-1 rounded">${u.tag_uid || 'Sem UID'}</span>
+                            <button onclick="copyUIDPrompt('${u.id}')" title="Copiar / Vincular UID da TAG" class="px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded border border-indigo-500/30 transition text-[10px]">
+                                <i class="fa-solid fa-tag"></i> Vincular UID
+                            </button>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${u.active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                            ${u.active ? 'Habilitado' : 'Desabilitado'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="toggleUserGlobalStatus('${u.id}', ${!u.active})" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Habilitar/Desabilitar">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        async function copyUIDPrompt(userId) {
+            const uid = prompt("Aproxime a TAG ou digite o UID lido do leitor/celular:");
+            if (!uid) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/v1/admin/users/${userId}/uid`, {
+                    method: "PATCH",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ tag_uid: uid.trim() })
+                });
+                if (res.ok) loadUsers();
+            } catch (err) {
+                alert("Erro ao vincular UID.");
+            }
+        }
+
+        async function toggleUserGlobalStatus(userId, newActiveStatus) {
+            try {
+                await fetch(`${API_BASE_URL}/v1/admin/users/${userId}/status`, {
+                    method: "PATCH",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ active: newActiveStatus })
+                });
+                loadUsers();
+            } catch (err) {
+                alert("Erro ao alterar status do usuário.");
+            }
+        }
+
+        function openUserModal() { document.getElementById("userModal").classList.remove("hidden"); }
+        function closeUserModal() { document.getElementById("userModal").classList.add("hidden"); }
+
+        async function handleCreateUser(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById("userName").value,
+                document: document.getElementById("userDocument").value || null,
+                code: document.getElementById("userCode").value || null,
+                photo_url: document.getElementById("userPhotoUrl").value || null
+            };
+
+            const res = await fetch(`${API_BASE_URL}/v1/admin/users`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                closeUserModal();
+                loadUsers();
+            } else {
+                alert("Erro ao cadastrar usuário.");
+            }
+        }
+
+        // ================= ABA 2: CRIAR EVENTO =================
+        function renderUsersChecklist(users) {
+            const container = document.getElementById("eventUsersChecklist");
+            if (users.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500">Cadastre pessoas na Aba 1 primeiro.</p>`;
+                return;
+            }
+            container.innerHTML = users.map(u => `
+                <label class="flex items-center gap-2 text-xs text-slate-300 hover:bg-slate-800/40 p-1.5 rounded cursor-pointer">
+                    <input type="checkbox" value="${u.id}" class="user-event-checkbox rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0">
+                    <span>${u.name} (${u.document || u.code || 'Sem doc'})</span>
+                </label>
+            `).join("");
+        }
+
+        function toggleSelectAllUsers() {
+            const checkboxes = document.querySelectorAll(".user-event-checkbox");
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+
+        async function handleCreateEvent(e) {
+            e.preventDefault();
+            const selectedUserIds = Array.from(document.querySelectorAll(".user-event-checkbox:checked")).map(cb => cb.value);
+
+            const payload = {
+                title: document.getElementById("eventTitle").value,
+                event_date: document.getElementById("eventDate").value,
+                description: document.getElementById("eventDescription").value || null,
+                user_ids: selectedUserIds
+            };
+
+            const res = await fetch(`${API_BASE_URL}/v1/admin/events`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("Evento criado com sucesso!");
+                loadEvents();
+                switchTab("tab3");
+            } else {
+                alert("Erro ao criar evento.");
+            }
+        }
+
+        // ================= ABA 3: GESTÃO DO EVENTO =================
+        async function loadEvents() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/v1/admin/events`, { headers: getAuthHeaders() });
+                globalEvents = await res.json();
+                
+                const select = document.getElementById("selectManageEvent");
+                select.innerHTML = `<option value="">-- Selecione um Evento --</option>` + 
+                    globalEvents.map(e => `<option value="${e.id}">${e.title} (${e.event_date ? e.event_date.split('T')[0] : ''})</option>`).join("");
+            } catch (err) {
+                console.error("Erro ao carregar eventos:", err);
+            }
+        }
+
+        async function loadEventParticipants() {
+            const eventId = document.getElementById("selectManageEvent").value;
+            const tbody = document.getElementById("participantsTableBody");
+
+            if (!eventId) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500">Selecione um evento acima para gerenciar os acessos.</td></tr>`;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/v1/admin/events/${eventId}/participants`, { headers: getAuthHeaders() });
+                const participants = await res.json();
+
+                if (participants.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500">Nenhum participante vinculado a este evento.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = participants.map(p => `
+                    <tr class="hover:bg-slate-800/30 transition">
+                        <td class="py-3 px-4 font-semibold text-white">${p.name}</td>
+                        <td class="py-3 px-4 font-mono text-slate-400">${p.document || p.code || '--'}</td>
+                        <td class="py-3 px-4 font-mono text-indigo-300 text-[11px]">${p.tag_uid || 'Sem UID'}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="toggleEventParticipant('${eventId}', '${p.user_id}', ${!p.enabled_in_event})" 
+                                class="px-3 py-1 rounded-full text-[10px] font-semibold border transition ${p.enabled_in_event ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20'}">
+                                ${p.enabled_in_event ? '<i class="fa-solid fa-circle-check"></i> Habilitado no Evento' : '<i class="fa-solid fa-circle-xmark"></i> Desabilitado no Evento'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join("");
+            } catch (err) {
+                console.error("Erro ao carregar participantes:", err);
+            }
+        }
+
+        async function toggleEventParticipant(eventId, userId, newStatus) {
+            try {
+                await fetch(`${API_BASE_URL}/v1/admin/events/${eventId}/participants/${userId}`, {
+                    method: "PATCH",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ enabled_in_event: newStatus })
+                });
+                loadEventParticipants();
+            } catch (err) {
+                alert("Erro ao alterar acesso do participante.");
+            }
+        }
+
+        // Logout
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = "/index.html";
+        }
+    </script>
+</body>
+</html>
