@@ -143,11 +143,11 @@
                 localStorage.setItem("aproxime_company_id", data.company_id || "");
                 localStorage.setItem("aproxime_company_name", data.company_name || "");
 
-                // Redirecionamento Inteligente baseado no Role (usando caminhos relativos)
+                // Redirecionamento Inteligente baseado no Role
                 if (data.role === "superadmin") {
                     window.location.href = "/superadmineventos.html";
                 } else if (data.role === "admin") {
-                    window.location.href = "/admineventos.html";
+                    window.location.href = "/dashboard.html";
                 } else {
                     throw new Error("Perfil de acesso não reconhecido.");
                 }
