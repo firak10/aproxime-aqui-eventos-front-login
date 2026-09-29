@@ -113,13 +113,23 @@
                 <!-- Formulário de Cadastro / Edição -->
                 <form id="userForm" onsubmit="handleSaveUser(event)" class="space-y-4">
                     
-                    <!-- Campo Seletor (Visível Apenas no Modo Edição) -->
-                    <div id="userSelectContainer" class="hidden">
-                        <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">Selecione a Pessoa para Editar *</label>
-                        <select id="selectEditUser" onchange="onSelectUserToEdit()"
-                            class="w-full px-3.5 py-2.5 bg-slate-900 border border-indigo-500/50 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-400">
-                            <option value="">-- Selecione uma pessoa --</option>
-                        </select>
+                    <!-- Campo Seletor com Filtro de Busca (Visível Apenas no Modo Edição) -->
+                    <div id="userSelectContainer" class="hidden space-y-2">
+                        <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider">Selecione a Pessoa para Editar *</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-xs"></i>
+                                <input type="text" id="inputFilterUserEdit" oninput="filterUserEditOptions()"
+                                    placeholder="Filtrar pessoa por nome ou documento/código..."
+                                    class="w-full pl-9 pr-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-400">
+                            </div>
+                            <div>
+                                <select id="selectEditUser" onchange="onSelectUserToEdit()"
+                                    class="w-full px-3.5 py-2.5 bg-slate-900 border border-indigo-500/50 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-400">
+                                    <option value="">-- Selecione uma pessoa --</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -157,11 +167,31 @@
                 </form>
             </div>
 
-            <!-- Tabela de Usuários -->
+            <!-- Tabela de Usuários com Filtros -->
             <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white">Base de Pessoas Cadastradas</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Gerencie o cadastro geral de participantes e gere as Hashes para gravação NDEF.</p>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Base de Pessoas Cadastradas</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Gerencie o cadastro geral de participantes e gere as Hashes para gravação NDEF.</p>
+                    </div>
+
+                    <!-- Filtros da Tabela -->
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+                            <input type="text" id="inputSearchUserTable" oninput="filterUserTable()"
+                                placeholder="Buscar por Nome ou Doc/Código..."
+                                class="w-full pl-9 pr-3.5 py-2 bg-slate-900 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div class="w-full sm:w-40">
+                            <select id="selectStatusUserTable" onchange="filterUserTable()"
+                                class="w-full px-3 py-2 bg-slate-900 border border-slate-700/60 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
+                                <option value="all">Todos os Status</option>
+                                <option value="active">Ativos</option>
+                                <option value="inactive">Inativos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -324,6 +354,17 @@
         let userFormMode = "create"; // 'create' | 'edit'
         let eventFormMode = "create"; // 'create' | 'edit'
 
+        // Formatador Auxiliar de Data Apenas (DD/MM/AAAA)
+        function formatDateOnly(dateString) {
+            if (!dateString) return 'Sem data';
+            const rawDate = dateString.split('T')[0];
+            const parts = rawDate.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return rawDate;
+        }
+
         // Inicialização e Proteção de Rota
         window.addEventListener("DOMContentLoaded", () => {
             const token = localStorage.getItem("aproxime_token");
@@ -366,7 +407,7 @@
             try {
                 const res = await fetch(`${API_BASE_URL}/v1/admin/users`, { headers: getAuthHeaders() });
                 globalUsers = await res.json();
-                renderUsersTable(globalUsers);
+                filterUserTable();
                 renderUsersChecklist(globalUsers);
                 renderUserSelectForEdit(globalUsers);
             } catch (err) {
@@ -396,10 +437,21 @@
             }
         }
 
+        function filterUserEditOptions() {
+            const searchTerm = (document.getElementById("inputFilterUserEdit").value || "").toLowerCase().trim();
+            const filtered = globalUsers.filter(u => {
+                const nameMatch = u.name ? u.name.toLowerCase().includes(searchTerm) : false;
+                const docMatch = u.document ? u.document.toLowerCase().includes(searchTerm) : false;
+                const codeMatch = u.code ? u.code.toLowerCase().includes(searchTerm) : false;
+                return nameMatch || docMatch || codeMatch;
+            });
+            renderUserSelectForEdit(filtered);
+        }
+
         function renderUserSelectForEdit(users) {
             const select = document.getElementById("selectEditUser");
             if (!users || users.length === 0) {
-                select.innerHTML = `<option value="">-- Nenhuma pessoa cadastrada --</option>`;
+                select.innerHTML = `<option value="">-- Nenhuma pessoa encontrada --</option>`;
                 return;
             }
             select.innerHTML = `<option value="">-- Selecione uma pessoa --</option>` +
@@ -423,10 +475,30 @@
             }
         }
 
+        function filterUserTable() {
+            const searchTerm = (document.getElementById("inputSearchUserTable").value || "").toLowerCase().trim();
+            const statusFilter = document.getElementById("selectStatusUserTable").value;
+
+            const filtered = globalUsers.filter(u => {
+                const nameMatch = u.name ? u.name.toLowerCase().includes(searchTerm) : false;
+                const docMatch = u.document ? u.document.toLowerCase().includes(searchTerm) : false;
+                const codeMatch = u.code ? u.code.toLowerCase().includes(searchTerm) : false;
+                const matchesSearch = nameMatch || docMatch || codeMatch;
+
+                let matchesStatus = true;
+                if (statusFilter === "active") matchesStatus = u.active === true;
+                if (statusFilter === "inactive") matchesStatus = u.active === false;
+
+                return matchesSearch && matchesStatus;
+            });
+
+            renderUsersTable(filtered);
+        }
+
         function renderUsersTable(users) {
             const tbody = document.getElementById("usersTableBody");
             if (!users || users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum usuário cadastrado ainda.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhuma pessoa encontrada.</td></tr>`;
                 return;
             }
 
@@ -648,7 +720,7 @@
                 return;
             }
             select.innerHTML = `<option value="">-- Selecione um evento --</option>` +
-                events.map(e => `<option value="${e.id}">${e.title} (${e.event_date || 'Sem data'})</option>`).join("");
+                events.map(e => `<option value="${e.id}">${e.title} (${formatDateOnly(e.event_date)})</option>`).join("");
         }
 
         function onSelectEventToEdit() {
@@ -676,7 +748,7 @@
             }
 
             let options = `<option value="">-- Selecione um Evento --</option>`;
-            options += events.map(e => `<option value="${e.id}">${e.title} (${e.event_date || 'Sem data'})</option>`).join("");
+            options += events.map(e => `<option value="${e.id}">${e.title} (${formatDateOnly(e.event_date)})</option>`).join("");
             select.innerHTML = options;
         }
 
