@@ -4,30 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SuperAdmin - Aproxime Aqui Eventos</title>
-    <!-- Tailwind CSS -->
+    <!-- CSS Externos -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
-        }
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-modal {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-    </style>
+    <!-- Estilo Local -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="min-h-screen text-slate-200 flex flex-col">
 
@@ -103,10 +85,8 @@
             </div>
         </div>
 
-        <!-- Seção Principal: Tabela de Empresas -->
+        <!-- Tabela de Empresas -->
         <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
-            
-            <!-- Barra de Ações (Busca + Novo Cadastro) -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-white">Empresas Clientes</h2>
@@ -129,7 +109,6 @@
                 </div>
             </div>
 
-            <!-- Tabela de Empresas -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
@@ -209,168 +188,10 @@
         </div>
     </div>
 
-    <!-- JS de Controle e Integração -->
+    <!-- Script Local -->
+    <script src="script.js"></script>
     <script>
-        const API_BASE_URL = "https://aproxime-aqui-eventos-api.onrender.com";
-        let companiesList = [];
-
-        // Proteção de Rota ao Carregar a Página
-        window.addEventListener("DOMContentLoaded", () => {
-            const token = localStorage.getItem("aproxime_token");
-            const role = localStorage.getItem("aproxime_role");
-
-            if (!token || role !== "superadmin") {
-                window.location.href = "https://logineventos.aproximeaqui.com.br";
-                return;
-            }
-
-            fetchCompanies();
-        });
-
-        // Buscar Empresas da API
-        async function fetchCompanies() {
-            const token = localStorage.getItem("aproxime_token");
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    companiesList = await response.json();
-                } else {
-                    companiesList = [];
-                }
-
-                renderCompanies(companiesList);
-                updateMetrics();
-
-            } catch (err) {
-                console.error("Erro ao carregar empresas:", err);
-                renderCompanies([]);
-            }
-        }
-
-        // Renderizar Tabela
-        function renderCompanies(list) {
-            const tbody = document.getElementById("companiesTableBody");
-
-            if (list.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="py-8 text-center text-slate-500">Nenhuma empresa encontrada.</td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tbody.innerHTML = list.map(c => `
-                <tr class="hover:bg-slate-800/30 transition">
-                    <td class="py-3 px-4 font-semibold text-white">${c.name}</td>
-                    <td class="py-3 px-4 font-mono text-indigo-300 text-[11px]">${c.email || '--'}</td>
-                    <td class="py-3 px-4 font-mono text-slate-400">${c.document || '--'}</td>
-                    <td class="py-3 px-4">
-                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
-                            <span class="w-1.5 h-1.5 rounded-full ${c.active ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
-                            ${c.active ? 'Ativa' : 'Inativa'}
-                        </span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                        <button onclick="toggleCompanyStatus('${c.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Alternar Status">
-                            <i class="fa-solid fa-power-off"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join("");
-        }
-
-        // Atualizar Métricas SuperAdmin
-        function updateMetrics() {
-            document.getElementById("totalCompanies").innerText = companiesList.length;
-            document.getElementById("totalEvents").innerText = companiesList.length * 2;
-            document.getElementById("totalReads").innerText = "1,420";
-        }
-
-        // Filtro de Busca
-        function filterCompanies() {
-            const query = document.getElementById("searchInput").value.toLowerCase();
-            const filtered = companiesList.filter(c => 
-                (c.name && c.name.toLowerCase().includes(query)) || 
-                (c.email && c.email.toLowerCase().includes(query)) ||
-                (c.document && c.document.includes(query))
-            );
-            renderCompanies(filtered);
-        }
-
-        // Modais e Formulários
-        function openCompanyModal() {
-            document.getElementById("companyModal").classList.remove("hidden");
-        }
-
-        function closeCompanyModal() {
-            document.getElementById("companyModal").classList.add("hidden");
-            document.getElementById("companyForm").reset();
-        }
-
-        function generateRandomPassword() {
-            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$";
-            let result = "";
-            for (let i = 0; i < 10; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            const passInput = document.getElementById("companyPassword");
-            passInput.type = "text";
-            passInput.value = result;
-        }
-
-        // Cadastrar Empresa na API
-        async function handleCreateCompany(event) {
-            event.preventDefault();
-
-            const token = localStorage.getItem("aproxime_token");
-            const btn = document.getElementById("btnSaveCompany");
-
-            const payload = {
-                name: document.getElementById("companyName").value,
-                email: document.getElementById("companyEmail").value,
-                document: document.getElementById("companyDocument").value || null,
-                password: document.getElementById("companyPassword").value
-            };
-
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...`;
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.detail || "Erro ao cadastrar empresa.");
-                }
-
-                closeCompanyModal();
-                fetchCompanies();
-
-            } catch (err) {
-                alert(err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<span>Salvar Empresa</span>`;
-            }
-        }
-
-        // Logout
-        function handleLogout() {
-            localStorage.clear();
-            window.location.href = "https://logineventos.aproximeaqui.com.br";
-        }
+        window.addEventListener("DOMContentLoaded", initSuperAdmin);
     </script>
 </body>
 </html>
