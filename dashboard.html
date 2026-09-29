@@ -27,15 +27,15 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .glass-modal {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
         .tab-btn.active {
             background-color: rgba(99, 102, 241, 0.2);
             border-color: rgba(129, 140, 248, 0.5);
+            color: #ffffff;
+        }
+
+        .sub-tab-btn.active {
+            background-color: rgba(99, 102, 241, 0.3);
+            border-color: rgba(129, 140, 248, 0.6);
             color: #ffffff;
         }
     </style>
@@ -65,7 +65,7 @@
         </div>
     </header>
 
-    <!-- Navegação de Abas -->
+    <!-- Navegação de Abas Principal -->
     <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
             <button onclick="switchTab('tab1')" id="btnTab1"
@@ -77,13 +77,13 @@
             <button onclick="switchTab('tab2')" id="btnTab2"
                 class="tab-btn px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
                 <i class="fa-solid fa-calendar-plus"></i>
-                <span>2. Criar Evento</span>
+                <span>2. Eventos (Criar / Editar)</span>
             </button>
 
             <button onclick="switchTab('tab3')" id="btnTab3"
                 class="tab-btn px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
                 <i class="fa-solid fa-sliders"></i>
-                <span>3. Gestão de Eventos</span>
+                <span>3. Gestão de Acessos</span>
             </button>
         </div>
     </div>
@@ -91,24 +91,79 @@
     <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        <!-- ================= ABA 1: CADASTRO E LISTAGEM DE USUÁRIOS ================= -->
+        <!-- ================= ABA 1: PESSOAS / USUÁRIOS ================= -->
         <section id="tab1" class="tab-content space-y-6">
-            <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-white">Base de Pessoas Cadastradas</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Gerencie o cadastro geral de participantes e gere as
-                            Hashes para gravação NDEF.</p>
-                    </div>
 
-                    <button onclick="openUserModal()"
-                        class="py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 whitespace-nowrap">
+            <!-- Painel de Cadastro e Edição Direto no Topo -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-4">
+                <!-- Selector Cadastrar / Editar -->
+                <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+                    <button onclick="switchUserFormMode('create')" id="btnUserModeCreate"
+                        class="sub-tab-btn active px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-user-plus"></i>
-                        <span>Novo Usuário</span>
+                        <span>Cadastrar Nova Pessoa</span>
+                    </button>
+                    <button onclick="switchUserFormMode('edit')" id="btnUserModeEdit"
+                        class="sub-tab-btn px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-pen"></i>
+                        <span>Editar Pessoa Existente</span>
                     </button>
                 </div>
 
-                <!-- Tabela de Usuários -->
+                <!-- Formulário de Cadastro / Edição -->
+                <form id="userForm" onsubmit="handleSaveUser(event)" class="space-y-4">
+                    
+                    <!-- Campo Seletor (Visível Apenas no Modo Edição) -->
+                    <div id="userSelectContainer" class="hidden">
+                        <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">Selecione a Pessoa para Editar *</label>
+                        <select id="selectEditUser" onchange="onSelectUserToEdit()"
+                            class="w-full px-3.5 py-2.5 bg-slate-900 border border-indigo-500/50 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-400">
+                            <option value="">-- Selecione uma pessoa --</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome Completo *</label>
+                            <input type="text" id="userName" required placeholder="Ex: Carlos Silva"
+                                class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento (Opcional)</label>
+                            <input type="text" id="userDocument" placeholder="CPF / RG"
+                                class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Código / Matrícula (Opcional)</label>
+                            <input type="text" id="userCode" placeholder="Ex: 1042"
+                                class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Foto de Perfil (Arquivo)</label>
+                            <input type="file" id="userPhotoFile" accept="image/*"
+                                class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700/60 rounded-xl text-slate-300 text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/30 file:text-indigo-300 hover:file:bg-indigo-600/50 cursor-pointer">
+                        </div>
+                        <div class="flex justify-end pt-4 sm:pt-0">
+                            <button type="submit" id="btnSaveUser"
+                                class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span id="lblSaveUser">Salvar Pessoa</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabela de Usuários -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Base de Pessoas Cadastradas</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Gerencie o cadastro geral de participantes e gere as Hashes para gravação NDEF.</p>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
@@ -130,44 +185,59 @@
             </div>
         </section>
 
-        <!-- ================= ABA 2: CRIAR EVENTO ================= -->
+        <!-- ================= ABA 2: CRIAR / EDITAR EVENTO ================= -->
         <section id="tab2" class="tab-content hidden space-y-6">
             <div class="glass-panel rounded-2xl p-6 shadow-xl max-w-3xl mx-auto space-y-6">
-                <div>
-                    <h2 class="text-xl font-bold text-white">Criar Novo Evento</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Defina os detalhes do evento e selecione quem já inicia
-                        habilitado.</p>
+                
+                <!-- Alternador Criar / Editar Evento -->
+                <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+                    <button onclick="switchEventFormMode('create')" id="btnEventModeCreate"
+                        class="sub-tab-btn active px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>Criar Novo Evento</span>
+                    </button>
+                    <button onclick="switchEventFormMode('edit')" id="btnEventModeEdit"
+                        class="sub-tab-btn px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-pen"></i>
+                        <span>Editar Evento Existente</span>
+                    </button>
                 </div>
 
-                <form onsubmit="handleCreateEvent(event)" class="space-y-4">
+                <!-- Formulário de Evento -->
+                <form id="eventForm" onsubmit="handleSaveEvent(event)" class="space-y-4">
+                    
+                    <!-- Campo Seletor (Visível Apenas no Modo Edição de Evento) -->
+                    <div id="eventSelectContainer" class="hidden">
+                        <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">Selecione o Evento para Editar *</label>
+                        <select id="selectEditEvent" onchange="onSelectEventToEdit()"
+                            class="w-full px-3.5 py-2.5 bg-slate-900 border border-indigo-500/50 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-400">
+                            <option value="">-- Selecione um evento --</option>
+                        </select>
+                    </div>
+
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome
-                            do Evento</label>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome do Evento *</label>
                         <input type="text" id="eventTitle" required placeholder="Ex: Convenção Anual 2026"
                             class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label
-                                class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Data
-                                do Evento</label>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Data do Evento *</label>
                             <input type="date" id="eventDate" required
                                 class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label
-                                class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Descrição
-                                (Opcional)</label>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Descrição (Opcional)</label>
                             <input type="text" id="eventDescription" placeholder="Ex: Acesso pela Entrada B"
                                 class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                         </div>
                     </div>
 
-                    <div>
+                    <!-- Checklist de Pessoas Habilitadas (Apenas no Modo Cadastro) -->
+                    <div id="eventChecklistContainer">
                         <div class="flex items-center justify-between mb-2">
-                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Habilitar
-                                Pessoas Inicialmente</label>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Habilitar Pessoas Inicialmente</label>
                             <button type="button" onclick="toggleSelectAllUsers()"
                                 class="text-[11px] text-indigo-400 hover:underline">Marcar / Desmarcar Todos</button>
                         </div>
@@ -181,7 +251,7 @@
                         <button type="submit" id="btnSaveEvent"
                             class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
                             <i class="fa-solid fa-check"></i>
-                            <span>Salvar e Criar Evento</span>
+                            <span id="lblSaveEvent">Salvar e Criar Evento</span>
                         </button>
                     </div>
                 </form>
@@ -195,8 +265,7 @@
                     class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-white">Gestão de Acesso por Evento</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Selecione o evento para ligar/desligar a permissão de
-                            entrada individual de todos os usuários.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Selecione o evento para ligar/desligar a permissão de entrada individual de todos os usuários.</p>
                     </div>
 
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
@@ -231,8 +300,7 @@
                         </thead>
                         <tbody id="participantsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
                             <tr>
-                                <td colspan="4" class="py-8 text-center text-slate-500">Selecione um evento acima para
-                                    gerenciar os acessos.</td>
+                                <td colspan="4" class="py-8 text-center text-slate-500">Selecione um evento acima para gerenciar os acessos.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -242,77 +310,19 @@
 
     </main>
 
-    <!-- Modal: Cadastrar Novo Usuário (Aba 1) -->
-    <div id="userModal"
-        class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-user-plus text-indigo-400"></i>
-                    Cadastrar Nova Pessoa
-                </h3>
-                <button onclick="closeUserModal()" class="text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <form id="userForm" onsubmit="handleCreateUser(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome
-                        Completo *</label>
-                    <input type="text" id="userName" required placeholder="Ex: Carlos Silva"
-                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label
-                            class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento
-                            (Opcional)</label>
-                        <input type="text" id="userDocument" placeholder="CPF / RG"
-                            class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Código
-                            / Matrícula (Opcional)</label>
-                        <input type="text" id="userCode" placeholder="Ex: 1042"
-                            class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-                    </div>
-                </div>
-
-                <!-- CAMPO DE UPLOAD DE ARQUIVO DA FOTO -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Foto de
-                        Perfil (Arquivo)</label>
-                    <input type="file" id="userPhotoFile" accept="image/*"
-                        class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700/60 rounded-xl text-slate-300 text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/30 file:text-indigo-300 hover:file:bg-indigo-600/50 cursor-pointer">
-                </div>
-
-                <div class="pt-4 flex justify-end gap-3 border-t border-slate-800">
-                    <button type="button" onclick="closeUserModal()"
-                        class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800/50 text-slate-300 text-xs font-semibold transition">
-                        Cancelar
-                    </button>
-                    <button type="submit" id="btnSaveUser"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
-                        <span>Salvar Pessoa</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- JS de Controle das 3 Abas e Conexão com API -->
+    <!-- JS de Controle e Integração com Backend -->
     <script>
         const API_BASE_URL = "https://aproxime-aqui-eventos-api.onrender.com";
 
-        // CONFIGURAÇÕES DO SUPABASE STORAGE
+        // SUPABASE STORAGE
         const SUPABASE_URL = "https://bosjqefiyodvzjqevfbj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_Y-k0XJz0MLAuVJjOWQy5ng_m2GqZR3G";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let globalUsers = [];
         let globalEvents = [];
+        let userFormMode = "create"; // 'create' | 'edit'
+        let eventFormMode = "create"; // 'create' | 'edit'
 
         // Inicialização e Proteção de Rota
         window.addEventListener("DOMContentLoaded", () => {
@@ -358,8 +368,58 @@
                 globalUsers = await res.json();
                 renderUsersTable(globalUsers);
                 renderUsersChecklist(globalUsers);
+                renderUserSelectForEdit(globalUsers);
             } catch (err) {
                 console.error("Erro ao carregar usuários:", err);
+            }
+        }
+
+        function switchUserFormMode(mode) {
+            userFormMode = mode;
+            const containerSelect = document.getElementById("userSelectContainer");
+            const btnCreate = document.getElementById("btnUserModeCreate");
+            const btnEdit = document.getElementById("btnUserModeEdit");
+            const lblSave = document.getElementById("lblSaveUser");
+
+            if (mode === 'create') {
+                btnCreate.classList.add("active");
+                btnEdit.classList.remove("active");
+                containerSelect.classList.add("hidden");
+                lblSave.innerText = "Salvar Pessoa";
+                document.getElementById("userForm").reset();
+            } else {
+                btnEdit.classList.add("active");
+                btnCreate.classList.remove("active");
+                containerSelect.classList.remove("hidden");
+                lblSave.innerText = "Atualizar Dados da Pessoa";
+                onSelectUserToEdit();
+            }
+        }
+
+        function renderUserSelectForEdit(users) {
+            const select = document.getElementById("selectEditUser");
+            if (!users || users.length === 0) {
+                select.innerHTML = `<option value="">-- Nenhuma pessoa cadastrada --</option>`;
+                return;
+            }
+            select.innerHTML = `<option value="">-- Selecione uma pessoa --</option>` +
+                users.map(u => `<option value="${u.id}">${u.name} (${u.document || u.code || 'Sem doc'})</option>`).join("");
+        }
+
+        function onSelectUserToEdit() {
+            const userId = document.getElementById("selectEditUser").value;
+            if (!userId) {
+                document.getElementById("userName").value = "";
+                document.getElementById("userDocument").value = "";
+                document.getElementById("userCode").value = "";
+                return;
+            }
+
+            const user = globalUsers.find(u => u.id === userId);
+            if (user) {
+                document.getElementById("userName").value = user.name || "";
+                document.getElementById("userDocument").value = user.document || "";
+                document.getElementById("userCode").value = user.code || "";
             }
         }
 
@@ -393,13 +453,23 @@
                             ${u.active ? 'Habilitado' : 'Desabilitado'}
                         </span>
                     </td>
-                    <td class="py-3 px-4 text-right">
-                        <button onclick="toggleUserGlobalStatus('${u.id}', ${!u.active})" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Habilitar/Desabilitar">
+                    <td class="py-3 px-4 text-right flex items-center justify-end gap-2">
+                        <button onclick="prepareUserEdit('${u.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Editar">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="toggleUserGlobalStatus('${u.id}', ${!u.active})" class="text-slate-400 hover:text-rose-400 p-1.5 transition" title="Habilitar/Desabilitar">
                             <i class="fa-solid fa-power-off"></i>
                         </button>
                     </td>
                 </tr>
             `).join("");
+        }
+
+        function prepareUserEdit(userId) {
+            switchUserFormMode('edit');
+            document.getElementById("selectEditUser").value = userId;
+            onSelectUserToEdit();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function generateRandomTagUID() {
@@ -445,12 +515,6 @@
             }
         }
 
-        function openUserModal() {
-            document.getElementById("userForm").reset();
-            document.getElementById("userModal").classList.remove("hidden");
-        }
-        function closeUserModal() { document.getElementById("userModal").classList.add("hidden"); }
-
         async function uploadPhotoToSupabase(file) {
             if (!file) return null;
 
@@ -478,15 +542,20 @@
             return publicUrlData.publicUrl;
         }
 
-        async function handleCreateUser(e) {
+        async function handleSaveUser(e) {
             e.preventDefault();
 
             const btn = document.getElementById("btnSaveUser");
             const photoFileInput = document.getElementById("userPhotoFile");
             const selectedFile = photoFileInput.files[0];
 
+            if (userFormMode === 'edit' && !document.getElementById("selectEditUser").value) {
+                alert("Selecione uma pessoa para editar.");
+                return;
+            }
+
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Enviando foto...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processando...`;
 
             try {
                 let uploadedPhotoUrl = null;
@@ -495,8 +564,6 @@
                     uploadedPhotoUrl = await uploadPhotoToSupabase(selectedFile);
                 }
 
-                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando dados...`;
-
                 const payload = {
                     name: document.getElementById("userName").value.trim(),
                     document: document.getElementById("userDocument").value.trim() || null,
@@ -504,35 +571,100 @@
                     photo_url: uploadedPhotoUrl
                 };
 
-                const res = await fetch(`${API_BASE_URL}/v1/admin/users`, {
-                    method: "POST",
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify(payload)
-                });
+                let res;
+                if (userFormMode === 'create') {
+                    res = await fetch(`${API_BASE_URL}/v1/admin/users`, {
+                        method: "POST",
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    const userId = document.getElementById("selectEditUser").value;
+                    res = await fetch(`${API_BASE_URL}/v1/admin/users/${userId}`, {
+                        method: "PUT",
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+                }
 
                 if (res.ok) {
-                    closeUserModal();
+                    alert(userFormMode === 'create' ? "Pessoa cadastrada com sucesso!" : "Dados da pessoa atualizados com sucesso!");
+                    document.getElementById("userForm").reset();
+                    if (userFormMode === 'edit') switchUserFormMode('create');
                     loadUsers();
                 } else {
                     const errData = await res.json();
-                    alert(errData.detail || "Erro ao cadastrar usuário.");
+                    alert(errData.detail || "Erro ao salvar pessoa.");
                 }
             } catch (err) {
                 alert(err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<span>Salvar Pessoa</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>${document.getElementById("lblSaveUser").innerText}</span>`;
             }
         }
 
-        // ================= ABA 2 & 3: EVENTOS =================
+        // ================= ABA 2: EVENTOS (CRIAR E EDITAR) =================
         async function loadEvents() {
             try {
                 const res = await fetch(`${API_BASE_URL}/v1/admin/events`, { headers: getAuthHeaders() });
                 globalEvents = await res.json();
                 renderEventsSelect(globalEvents);
+                renderEditEventsSelect(globalEvents);
             } catch (err) {
                 console.error("Erro ao carregar eventos:", err);
+            }
+        }
+
+        function switchEventFormMode(mode) {
+            eventFormMode = mode;
+            const containerSelect = document.getElementById("eventSelectContainer");
+            const containerChecklist = document.getElementById("eventChecklistContainer");
+            const btnCreate = document.getElementById("btnEventModeCreate");
+            const btnEdit = document.getElementById("btnEventModeEdit");
+            const lblSave = document.getElementById("lblSaveEvent");
+
+            if (mode === 'create') {
+                btnCreate.classList.add("active");
+                btnEdit.classList.remove("active");
+                containerSelect.classList.add("hidden");
+                containerChecklist.classList.remove("hidden");
+                lblSave.innerText = "Salvar e Criar Evento";
+                document.getElementById("eventForm").reset();
+            } else {
+                btnEdit.classList.add("active");
+                btnCreate.classList.remove("active");
+                containerSelect.classList.remove("hidden");
+                containerChecklist.classList.add("hidden");
+                lblSave.innerText = "Atualizar Evento";
+                onSelectEventToEdit();
+            }
+        }
+
+        function renderEditEventsSelect(events) {
+            const select = document.getElementById("selectEditEvent");
+            if (!events || events.length === 0) {
+                select.innerHTML = `<option value="">-- Nenhum evento cadastrado --</option>`;
+                return;
+            }
+            select.innerHTML = `<option value="">-- Selecione um evento --</option>` +
+                events.map(e => `<option value="${e.id}">${e.title} (${e.event_date || 'Sem data'})</option>`).join("");
+        }
+
+        function onSelectEventToEdit() {
+            const eventId = document.getElementById("selectEditEvent").value;
+            if (!eventId) {
+                document.getElementById("eventTitle").value = "";
+                document.getElementById("eventDate").value = "";
+                document.getElementById("eventDescription").value = "";
+                return;
+            }
+
+            const evt = globalEvents.find(e => e.id === eventId);
+            if (evt) {
+                document.getElementById("eventTitle").value = evt.title || "";
+                document.getElementById("eventDate").value = evt.event_date ? evt.event_date.split('T')[0] : "";
+                document.getElementById("eventDescription").value = evt.description || "";
             }
         }
 
@@ -568,35 +700,57 @@
             checkboxes.forEach(cb => cb.checked = !allChecked);
         }
 
-        async function handleCreateEvent(e) {
+        async function handleSaveEvent(e) {
             e.preventDefault();
-            const selectedUserIds = Array.from(document.querySelectorAll(".user-event-checkbox:checked")).map(cb => cb.value);
+
+            if (eventFormMode === 'edit' && !document.getElementById("selectEditEvent").value) {
+                alert("Selecione um evento para editar.");
+                return;
+            }
+
             const rawDate = document.getElementById("eventDate").value;
 
-            const payload = {
-                title: document.getElementById("eventTitle").value.trim(),
-                event_date: rawDate,
-                description: document.getElementById("eventDescription").value.trim() || null,
-                user_ids: selectedUserIds
-            };
-
             try {
-                const res = await fetch(`${API_BASE_URL}/v1/admin/events`, {
-                    method: "POST",
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify(payload)
-                });
+                let res;
+                if (eventFormMode === 'create') {
+                    const selectedUserIds = Array.from(document.querySelectorAll(".user-event-checkbox:checked")).map(cb => cb.value);
+                    const payload = {
+                        title: document.getElementById("eventTitle").value.trim(),
+                        event_date: rawDate,
+                        description: document.getElementById("eventDescription").value.trim() || null,
+                        user_ids: selectedUserIds
+                    };
+                    res = await fetch(`${API_BASE_URL}/v1/admin/events`, {
+                        method: "POST",
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    const eventId = document.getElementById("selectEditEvent").value;
+                    const payload = {
+                        title: document.getElementById("eventTitle").value.trim(),
+                        event_date: rawDate,
+                        description: document.getElementById("eventDescription").value.trim() || null
+                    };
+                    res = await fetch(`${API_BASE_URL}/v1/admin/events/${eventId}`, {
+                        method: "PUT",
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+                }
 
                 if (res.ok) {
-                    alert("Evento criado com sucesso!");
+                    alert(eventFormMode === 'create' ? "Evento criado com sucesso!" : "Evento atualizado com sucesso!");
+                    document.getElementById("eventForm").reset();
+                    if (eventFormMode === 'edit') switchEventFormMode('create');
                     await loadEvents();
                     switchTab("tab3");
                 } else {
                     const errData = await res.json();
-                    alert(`Erro ao criar evento: ${JSON.stringify(errData.detail || errData)}`);
+                    alert(`Erro ao salvar evento: ${JSON.stringify(errData.detail || errData)}`);
                 }
             } catch (err) {
-                alert("Erro de conexão ao criar evento.");
+                alert("Erro de conexão ao salvar evento.");
             }
         }
 
