@@ -28,10 +28,18 @@ function formatDateOnly(dateString) {
 
 // Helper Headers Autorizados
 function getAuthHeaders() {
-    return {
+    const role = localStorage.getItem("aproxime_role");
+    const headers = {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${localStorage.getItem("aproxime_token")}`
     };
+
+    // Se for SuperAdmin e houver empresa selecionada, envia no Header
+    if (role === "superadmin" && selectedCompanyIdForSuperAdmin) {
+        headers["X-Company-ID"] = selectedCompanyIdForSuperAdmin;
+    }
+
+    return headers;
 }
 
 // Helper para montar URL de requisição com filtro opcional de company_id para SuperAdmin
@@ -700,26 +708,44 @@ function switchSuperAdminTab(tabId) {
     if (tabId === 'tab3') document.getElementById("btnTab3").classList.add("active");
 }
 
-function onSuperAdminCompanyChange() {
+async function onSuperAdminCompanyChange() {
     const select = document.getElementById("superAdminCompanySelect");
-    selectedCompanyIdForSuperAdmin = select.value;
+    selectedCompanyIdForSuperAdmin = select ? select.value : "";
 
     const btn1 = document.getElementById("btnTab1");
     const btn2 = document.getElementById("btnTab2");
     const btn3 = document.getElementById("btnTab3");
 
+    // Limpa os dados em memória do contexto anterior
+    globalUsers = [];
+    globalEvents = [];
+    globalParticipants = [];
+
+    // Limpa as tabelas na tela para evitar exibição de dados da empresa anterior
+    if (document.getElementById("usersTableBody")) {
+        document.getElementById("usersTableBody").innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Carregando usuários da empresa...</td></tr>`;
+    }
+    if (document.getElementById("participantsTableBody")) {
+        document.getElementById("participantsTableBody").innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500">Selecione um evento acima para gerenciar os acessos.</td></tr>`;
+    }
+
     if (selectedCompanyIdForSuperAdmin) {
-        btn1.disabled = false;
-        btn2.disabled = false;
-        btn3.disabled = false;
-        
-        loadUsers();
-        loadEvents();
+        if (btn1) btn1.disabled = false;
+        if (btn2) btn2.disabled = false;
+        if (btn3) btn3.disabled = false;
+
+        // Carrega os dados da nova empresa em paralelo
+        await Promise.all([
+            loadUsers(),
+            loadEvents()
+        ]);
+
         switchSuperAdminTab("tab1");
     } else {
-        btn1.disabled = true;
-        btn2.disabled = true;
-        btn3.disabled = true;
+        if (btn1) btn1.disabled = true;
+        if (btn2) btn2.disabled = true;
+        if (btn3) btn3.disabled = true;
+
         switchSuperAdminTab("tabCompanies");
     }
 }
