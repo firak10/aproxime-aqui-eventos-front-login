@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard do Cliente - Aproxime Aqui Eventos</title>
+    <title>SuperAdmin - Aproxime Aqui Eventos</title>
     <!-- CSS Externos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,44 +16,69 @@
 
 <body class="min-h-screen text-slate-200 flex flex-col">
 
-    <!-- Topbar -->
+    <!-- Topbar / Navbar -->
     <header class="glass-panel sticky top-0 z-30 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">
-                    <i class="fa-solid fa-qrcode text-xl"></i>
+                    <i class="fa-solid fa-user-shield text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-white leading-none" id="companyTitle">Carregando Empresa...</h1>
-                    <span class="text-xs text-indigo-400 font-medium">Painel de Eventos & Acessos</span>
+                    <h1 class="text-lg font-bold text-white leading-none">Aproxime Aqui</h1>
+                    <span class="text-xs text-indigo-400 font-medium">Painel SuperAdmin</span>
                 </div>
             </div>
 
-            <button onclick="handleLogout()"
-                class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold transition flex items-center gap-2">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Sair</span>
-            </button>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-400 hidden sm:inline-block" id="userEmail">admin@aproximeaqui.com.br</span>
+                <button onclick="handleLogout()"
+                    class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold transition flex items-center gap-2">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Sair</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- Navegação de Abas Principal -->
+    <!-- Barra de Seleção de Empresa Global (Contexto de Atuação do SuperAdmin) -->
+    <section class="bg-indigo-950/40 border-b border-indigo-500/20 py-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
+                <i class="fa-solid fa-building-flag text-sm text-indigo-400"></i>
+                <span>Gerenciar Visão da Empresa:</span>
+            </div>
+            <div class="w-full sm:w-80">
+                <select id="superAdminCompanySelect" onchange="onSuperAdminCompanyChange()"
+                    class="w-full px-3.5 py-2 bg-slate-900 border border-indigo-500/50 rounded-xl text-white text-xs font-medium focus:outline-none focus:border-indigo-400 shadow-lg">
+                    <option value="">-- Visão Geral (Empresas Cadastradas) --</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navegação de Abas do SuperAdmin -->
     <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
-            <button onclick="switchTab('tab1')" id="btnTab1"
+            <button onclick="switchSuperAdminTab('tabCompanies')" id="btnTabCompanies"
                 class="tab-btn active px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-building"></i>
+                <span>Empresas Clientes</span>
+            </button>
+
+            <button onclick="switchSuperAdminTab('tab1')" id="btnTab1" disabled
+                class="tab-btn disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
                 <i class="fa-solid fa-users"></i>
                 <span>1. Pessoas / Usuários</span>
             </button>
 
-            <button onclick="switchTab('tab2')" id="btnTab2"
-                class="tab-btn px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+            <button onclick="switchSuperAdminTab('tab2')" id="btnTab2" disabled
+                class="tab-btn disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
                 <i class="fa-solid fa-calendar-plus"></i>
                 <span>2. Eventos (Criar / Editar)</span>
             </button>
 
-            <button onclick="switchTab('tab3')" id="btnTab3"
-                class="tab-btn px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+            <button onclick="switchSuperAdminTab('tab3')" id="btnTab3" disabled
+                class="tab-btn disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl border border-transparent text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
                 <i class="fa-solid fa-sliders"></i>
                 <span>3. Gestão de Acessos</span>
             </button>
@@ -61,12 +86,105 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
 
-        <!-- ================= ABA 1: PESSOAS / USUÁRIOS ================= -->
-        <section id="tab1" class="tab-content space-y-6">
+        <!-- ================= ABA EMPRESAS (VISÃO GERAL DO SUPERADMIN) ================= -->
+        <section id="tabCompanies" class="tab-content space-y-6">
+            <!-- Métricas Rápidas -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-building"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Empresas Ativas</p>
+                        <h3 class="text-2xl font-bold text-white mt-0.5" id="totalCompanies">--</h3>
+                    </div>
+                </div>
 
-            <!-- Painel de Cadastro e Edição Direto no Topo -->
+                <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Eventos Ativos</p>
+                        <h3 class="text-2xl font-bold text-white mt-0.5" id="totalEvents">--</h3>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-id-card"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Credenciais Lidas</p>
+                        <h3 class="text-2xl font-bold text-white mt-0.5" id="totalReads">--</h3>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status API</p>
+                        <h3 class="text-sm font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            100% Operacional
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Empresas -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Empresas Clientes</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Gerencie os acessos das organizadoras de eventos.</p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="relative flex-1 sm:w-64">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" id="searchInput" oninput="filterCompanies()"
+                                placeholder="Buscar por empresa, e-mail..."
+                                class="w-full pl-9 pr-4 py-2.5 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+
+                        <button onclick="openCompanyModal()"
+                            class="py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 whitespace-nowrap">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nova Empresa</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                                <th class="py-3 px-4">Empresa</th>
+                                <th class="py-3 px-4">E-mail (Login)</th>
+                                <th class="py-3 px-4">Documento</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="companiesTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-slate-500">Carregando empresas cadastradas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= ABA 1: PESSOAS / USUÁRIOS (DASHBOARD REPLICADO) ================= -->
+        <section id="tab1" class="tab-content hidden space-y-6">
             <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-4">
                 <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
                     <button onclick="switchUserFormMode('create')" id="btnUserModeCreate"
@@ -140,7 +258,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-xl font-bold text-white">Base de Pessoas Cadastradas</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Gerencie o cadastro geral de participantes. A Hash NDEF de cada pessoa é gerada automaticamente ao salvar.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Gerencie o cadastro geral de participantes. A Hash NDEF é gerada automaticamente ao salvar; use Copiar Hash para obter o link de gravação.</p>
                     </div>
 
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -182,7 +300,7 @@
             </div>
         </section>
 
-        <!-- ================= ABA 2: CRIAR / EDITAR EVENTO ================= -->
+        <!-- ================= ABA 2: CRIAR / EDITAR EVENTO (DASHBOARD REPLICADO) ================= -->
         <section id="tab2" class="tab-content hidden space-y-6">
             <div class="glass-panel rounded-2xl p-6 shadow-xl max-w-3xl mx-auto space-y-6">
                 <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
@@ -249,7 +367,7 @@
             </div>
         </section>
 
-        <!-- ================= ABA 3: GESTÃO DO EVENTO ================= -->
+        <!-- ================= ABA 3: GESTÃO DO EVENTO (DASHBOARD REPLICADO) ================= -->
         <section id="tab3" class="tab-content hidden space-y-6">
             <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
                 <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
@@ -266,11 +384,16 @@
                                 class="w-full pl-9 pr-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                         </div>
 
-                        <div class="w-full sm:w-64">
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
                             <select id="selectManageEvent" onchange="loadEventParticipants()"
-                                class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-indigo-500/40 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
+                                class="w-full sm:w-64 px-3.5 py-2.5 bg-slate-900/80 border border-indigo-500/40 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
                                 <option value="">-- Selecione um Evento --</option>
                             </select>
+                            <button type="button" id="btnRefreshParticipants" onclick="loadEventParticipants()"
+                                title="Recarregar lista de pessoas"
+                                class="shrink-0 w-9 h-9 flex items-center justify-center bg-slate-900/80 border border-indigo-500/40 hover:bg-indigo-600/20 text-indigo-300 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-rotate-right text-xs"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -297,10 +420,71 @@
 
     </main>
 
+    <!-- Modal: Cadastrar / Editar Empresa -->
+    <div id="companyModal"
+        class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2" id="companyModalTitle">
+                    <i class="fa-solid fa-building-circle-check text-indigo-400"></i>
+                    Cadastrar Nova Empresa
+                </h3>
+                <button onclick="closeCompanyModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="companyForm" onsubmit="handleSaveCompany(event)" class="space-y-4">
+                <input type="hidden" id="companyId">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome da Empresa / Evento *</label>
+                    <input type="text" id="companyName" required placeholder="Ex: Produções Ponta Grossa LTDA"
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">E-mail de Login *</label>
+                    <input type="email" id="companyEmail" required placeholder="cliente@empresa.com"
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento (CNPJ/CPF - Opcional)</label>
+                    <input type="text" id="companyDocument" placeholder="00.000.000/0001-00"
+                        class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5" id="lblCompanyPassword">Senha de Acesso *</label>
+                    <div class="relative">
+                        <input type="password" id="companyPassword" required placeholder="Defina a senha de login da empresa"
+                            class="w-full pl-3.5 pr-20 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                        <button type="button" onclick="generateRandomPassword()"
+                            class="absolute right-1 top-1 bottom-1 px-2.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-[10px] font-semibold rounded-lg transition">
+                            Gerar Senha
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-800">
+                    <button type="button" onclick="closeCompanyModal()"
+                        class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800/50 text-slate-300 text-xs font-semibold transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSaveCompany"
+                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                        <span id="btnSaveCompanyText">Salvar Empresa</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Script Local -->
     <script src="script.js"></script>
     <script>
-        window.addEventListener("DOMContentLoaded", initDashboard);
+        window.addEventListener("DOMContentLoaded", initSuperAdmin);
     </script>
 </body>
 

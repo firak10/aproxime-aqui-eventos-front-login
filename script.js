@@ -604,22 +604,53 @@ async function handleSaveEvent(e) {
 }
 
 // ABA 3: GESTÃO DO EVENTO
+// Controle de carregamento do grid de participantes (evita mostrar/agir sobre dados de outro evento)
+let participantsRequestSeq = 0;
+let participantsLoading = false;
+
+function setParticipantsLoading(isLoading) {
+    participantsLoading = isLoading;
+    const btn = document.getElementById("btnRefreshParticipants");
+    if (!btn) return;
+    btn.disabled = isLoading;
+    const icon = btn.querySelector("i");
+    if (icon) icon.classList.toggle("fa-spin", isLoading);
+}
+
 async function loadEventParticipants() {
     const eventId = document.getElementById("selectManageEvent").value;
     const tbody = document.getElementById("participantsTableBody");
+    const requestId = ++participantsRequestSeq;
+
+    // Limpa o grid imediatamente, antes de qualquer requisição
+    globalParticipants = [];
 
     if (!eventId) {
-        globalParticipants = [];
+        setParticipantsLoading(false);
         tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500">Selecione um evento acima para gerenciar os acessos.</td></tr>`;
         return;
     }
 
+    setParticipantsLoading(true);
+    tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Carregando pessoas do evento...</td></tr>`;
+
     try {
         const res = await fetch(buildApiUrl(`/v1/admin/events/${eventId}/participants`), { headers: getAuthHeaders() });
-        globalParticipants = await res.json();
+        const data = await res.json();
+
+        // Se o usuário trocou de evento (ou clicou em atualizar) enquanto carregava, descarta esta resposta
+        if (requestId !== participantsRequestSeq) return;
+
+        if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : `HTTP ${res.status}`);
+
+        globalParticipants = Array.isArray(data) ? data : [];
+        setParticipantsLoading(false);
         filterParticipants();
     } catch (err) {
+        if (requestId !== participantsRequestSeq) return;
         console.error("Erro ao carregar participantes:", err);
+        setParticipantsLoading(false);
+        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-rose-400">Erro ao carregar pessoas do evento: ${err.message}</td></tr>`;
     }
 }
 
@@ -627,7 +658,8 @@ function filterParticipants() {
     const searchTerm = document.getElementById("inputSearchParticipant").value.toLowerCase().trim();
     const eventId = document.getElementById("selectManageEvent").value;
 
-    if (!eventId) return;
+    // Não redesenha o grid enquanto os dados do evento ainda estão carregando
+    if (!eventId || participantsLoading) return;
 
     const filtered = globalParticipants.filter(p => {
         const nameMatch = p.name ? p.name.toLowerCase().includes(searchTerm) : false;
@@ -677,9 +709,12 @@ async function toggleEventParticipant(eventId, userId, newStatus) {
         });
 
         if (res.ok) {
-            const item = globalParticipants.find(p => p.user_id === userId);
-            if (item) item.enabled_in_event = newStatus;
-            filterParticipants();
+            // Só atualiza a tela se o evento exibido ainda for o mesmo que foi alterado
+            if (document.getElementById("selectManageEvent").value === eventId) {
+                const item = globalParticipants.find(p => p.user_id === userId);
+                if (item) item.enabled_in_event = newStatus;
+                filterParticipants();
+            }
         } else {
             alert("Erro ao alterar acesso do participante.");
         }
@@ -730,6 +765,8 @@ async function onSuperAdminCompanyChange() {
     globalUsers = [];
     globalEvents = [];
     globalParticipants = [];
+    participantsRequestSeq++;
+    setParticipantsLoading(false);
 
     // Limpa as tabelas na tela para evitar exibição de dados da empresa anterior
     if (document.getElementById("usersTableBody")) {
