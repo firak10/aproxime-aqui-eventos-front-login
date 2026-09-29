@@ -13,6 +13,7 @@ let globalParticipants = [];
 let companiesList = [];
 let userFormMode = "create"; // 'create' | 'edit'
 let eventFormMode = "create"; // 'create' | 'edit'
+let selectedCompanyIdForSuperAdmin = ""; // Armazena a empresa selecionada pelo SuperAdmin
 
 // Formatador Auxiliar de Data (DD/MM/AAAA)
 function formatDateOnly(dateString) {
@@ -31,6 +32,18 @@ function getAuthHeaders() {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${localStorage.getItem("aproxime_token")}`
     };
+}
+
+// Helper para montar URL de requisição com filtro opcional de company_id para SuperAdmin
+function buildApiUrl(path) {
+    const role = localStorage.getItem("aproxime_role");
+    let url = `${API_BASE_URL}${path}`;
+
+    if (role === "superadmin" && selectedCompanyIdForSuperAdmin) {
+        const separator = url.includes("?") ? "&" : "?";
+        url += `${separator}company_id=${selectedCompanyIdForSuperAdmin}`;
+    }
+    return url;
 }
 
 // Logout Global
@@ -107,7 +120,7 @@ async function handleLogin(event) {
 }
 
 // =========================================================================
-// 2. DASHBOARD DO CLIENTE (dashboard.html)
+// 2. DASHBOARD DO CLIENTE / OPERAÇÕES DE CONTEÚDO
 // =========================================================================
 
 function initDashboard() {
@@ -140,7 +153,7 @@ function switchTab(tabId) {
 // ABA 1: PESSOAS / USUÁRIOS
 async function loadUsers() {
     try {
-        const res = await fetch(`${API_BASE_URL}/v1/admin/users`, { headers: getAuthHeaders() });
+        const res = await fetch(buildApiUrl("/v1/admin/users"), { headers: getAuthHeaders() });
         globalUsers = await res.json();
         filterUserTable();
         renderUsersChecklist(globalUsers);
@@ -295,7 +308,7 @@ async function generateAndAssignUID(userId) {
     }
 
     try {
-        const res = await fetch(`${API_BASE_URL}/v1/admin/users/${userId}/uid`, {
+        const res = await fetch(buildApiUrl(`/v1/admin/users/${userId}/uid`), {
             method: "PATCH",
             headers: getAuthHeaders(),
             body: JSON.stringify({ tag_uid: newUID })
@@ -313,7 +326,7 @@ async function generateAndAssignUID(userId) {
 
 async function toggleUserGlobalStatus(userId, newActiveStatus) {
     try {
-        await fetch(`${API_BASE_URL}/v1/admin/users/${userId}/status`, {
+        await fetch(buildApiUrl(`/v1/admin/users/${userId}/status`), {
             method: "PATCH",
             headers: getAuthHeaders(),
             body: JSON.stringify({ active: newActiveStatus })
@@ -382,14 +395,14 @@ async function handleSaveUser(e) {
 
         let res;
         if (userFormMode === 'create') {
-            res = await fetch(`${API_BASE_URL}/v1/admin/users`, {
+            res = await fetch(buildApiUrl("/v1/admin/users"), {
                 method: "POST",
                 headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
         } else {
             const userId = document.getElementById("selectEditUser").value;
-            res = await fetch(`${API_BASE_URL}/v1/admin/users/${userId}`, {
+            res = await fetch(buildApiUrl(`/v1/admin/users/${userId}`), {
                 method: "PUT",
                 headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
@@ -416,7 +429,7 @@ async function handleSaveUser(e) {
 // ABA 2: EVENTOS
 async function loadEvents() {
     try {
-        const res = await fetch(`${API_BASE_URL}/v1/admin/events`, { headers: getAuthHeaders() });
+        const res = await fetch(buildApiUrl("/v1/admin/events"), { headers: getAuthHeaders() });
         globalEvents = await res.json();
         renderEventsSelect(globalEvents);
         renderEditEventsSelect(globalEvents);
@@ -532,7 +545,7 @@ async function handleSaveEvent(e) {
                 description: document.getElementById("eventDescription").value.trim() || null,
                 user_ids: selectedUserIds
             };
-            res = await fetch(`${API_BASE_URL}/v1/admin/events`, {
+            res = await fetch(buildApiUrl("/v1/admin/events"), {
                 method: "POST",
                 headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
@@ -544,7 +557,7 @@ async function handleSaveEvent(e) {
                 event_date: rawDate,
                 description: document.getElementById("eventDescription").value.trim() || null
             };
-            res = await fetch(`${API_BASE_URL}/v1/admin/events/${eventId}`, {
+            res = await fetch(buildApiUrl(`/v1/admin/events/${eventId}`), {
                 method: "PUT",
                 headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
@@ -556,7 +569,13 @@ async function handleSaveEvent(e) {
             document.getElementById("eventForm").reset();
             if (eventFormMode === 'edit') switchEventFormMode('create');
             await loadEvents();
-            switchTab("tab3");
+            
+            const role = localStorage.getItem("aproxime_role");
+            if (role === "superadmin") {
+                switchSuperAdminTab("tab3");
+            } else {
+                switchTab("tab3");
+            }
         } else {
             const errData = await res.json();
             alert(`Erro ao salvar evento: ${JSON.stringify(errData.detail || errData)}`);
@@ -578,7 +597,7 @@ async function loadEventParticipants() {
     }
 
     try {
-        const res = await fetch(`${API_BASE_URL}/v1/admin/events/${eventId}/participants`, { headers: getAuthHeaders() });
+        const res = await fetch(buildApiUrl(`/v1/admin/events/${eventId}/participants`), { headers: getAuthHeaders() });
         globalParticipants = await res.json();
         filterParticipants();
     } catch (err) {
@@ -633,7 +652,7 @@ function renderParticipantsTable(participants, eventId) {
 
 async function toggleEventParticipant(eventId, userId, newStatus) {
     try {
-        const res = await fetch(`${API_BASE_URL}/v1/admin/events/${eventId}/participants/${userId}`, {
+        const res = await fetch(buildApiUrl(`/v1/admin/events/${eventId}/participants/${userId}`), {
             method: "PATCH",
             headers: getAuthHeaders(),
             body: JSON.stringify({ enabled_in_event: newStatus })
@@ -656,6 +675,54 @@ async function toggleEventParticipant(eventId, userId, newStatus) {
 // =========================================================================
 
 let companyFormMode = "create"; // 'create' | 'edit'
+
+async function initSuperAdmin() {
+    const token = localStorage.getItem("aproxime_token");
+    const role = localStorage.getItem("aproxime_role");
+
+    if (!token || role !== "superadmin") {
+        window.location.href = "/index.html";
+        return;
+    }
+
+    await fetchCompanies();
+}
+
+function switchSuperAdminTab(tabId) {
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+    document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+
+    document.getElementById(tabId).classList.remove("hidden");
+    
+    if (tabId === 'tabCompanies') document.getElementById("btnTabCompanies").classList.add("active");
+    if (tabId === 'tab1') document.getElementById("btnTab1").classList.add("active");
+    if (tabId === 'tab2') document.getElementById("btnTab2").classList.add("active");
+    if (tabId === 'tab3') document.getElementById("btnTab3").classList.add("active");
+}
+
+function onSuperAdminCompanyChange() {
+    const select = document.getElementById("superAdminCompanySelect");
+    selectedCompanyIdForSuperAdmin = select.value;
+
+    const btn1 = document.getElementById("btnTab1");
+    const btn2 = document.getElementById("btnTab2");
+    const btn3 = document.getElementById("btnTab3");
+
+    if (selectedCompanyIdForSuperAdmin) {
+        btn1.disabled = false;
+        btn2.disabled = false;
+        btn3.disabled = false;
+        
+        loadUsers();
+        loadEvents();
+        switchSuperAdminTab("tab1");
+    } else {
+        btn1.disabled = true;
+        btn2.disabled = true;
+        btn3.disabled = true;
+        switchSuperAdminTab("tabCompanies");
+    }
+}
 
 function renderCompanies(list) {
     const tbody = document.getElementById("companiesTableBody");
@@ -682,6 +749,9 @@ function renderCompanies(list) {
                 </span>
             </td>
             <td class="py-3 px-4 text-right flex items-center justify-end gap-2">
+                <button onclick="selectCompanyContext('${c.id}')" class="text-indigo-400 hover:text-indigo-300 px-2 py-1 bg-indigo-600/20 rounded border border-indigo-500/30 text-[11px] font-semibold transition" title="Gerenciar Dados do Dashboard">
+                    <i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> Entrar
+                </button>
                 <button onclick="editCompany('${c.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Editar Empresa">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
@@ -691,6 +761,23 @@ function renderCompanies(list) {
             </td>
         </tr>
     `).join("");
+}
+
+function selectCompanyContext(companyId) {
+    const select = document.getElementById("superAdminCompanySelect");
+    if (select) {
+        select.value = companyId;
+        onSuperAdminCompanyChange();
+    }
+}
+
+function populateCompanySelectDropdown(companies) {
+    const select = document.getElementById("superAdminCompanySelect");
+    if (!select) return;
+
+    let html = `<option value="">-- Visão Geral (Empresas Cadastradas) --</option>`;
+    html += companies.map(c => `<option value="${c.id}">${c.name} (${c.email})</option>`).join("");
+    select.innerHTML = html;
 }
 
 function openCompanyModal(mode = "create") {
@@ -813,23 +900,6 @@ async function toggleCompanyStatus(companyId, newActiveStatus) {
     }
 }
 
-
-// =========================================================================
-// INICIALIZAÇÃO E AUXILIARES DO SUPERADMIN
-// =========================================================================
-
-async function initSuperAdmin() {
-    const token = localStorage.getItem("aproxime_token");
-    const role = localStorage.getItem("aproxime_role");
-
-    if (!token || role !== "superadmin") {
-        window.location.href = "/index.html";
-        return;
-    }
-
-    await fetchCompanies();
-}
-
 async function fetchCompanies() {
     const token = localStorage.getItem("aproxime_token");
 
@@ -850,13 +920,13 @@ async function fetchCompanies() {
 
         companiesList = await response.json();
         
-        // Atualiza contadores do topo
         const totalCompaniesEl = document.getElementById("totalCompanies");
         if (totalCompaniesEl) {
             totalCompaniesEl.innerText = companiesList.length;
         }
 
         renderCompanies(companiesList);
+        populateCompanySelectDropdown(companiesList);
     } catch (err) {
         console.error("Erro ao carregar lista de empresas:", err);
     }
@@ -886,6 +956,6 @@ function generateRandomPassword() {
     const pwdInput = document.getElementById("companyPassword");
     if (pwdInput) {
         pwdInput.value = password;
-        pwdInput.type = "text"; // Exibe temporariamente para facilitar cópia se necessário
+        pwdInput.type = "text";
     }
 }
