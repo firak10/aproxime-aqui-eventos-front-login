@@ -260,6 +260,9 @@ function renderUsersTable(users) {
         return;
     }
 
+    // Botão "Copiar Hash" existe apenas no painel do SuperAdmin
+    const isSuperAdmin = localStorage.getItem("aproxime_role") === "superadmin";
+
     tbody.innerHTML = users.map(u => `
         <tr class="hover:bg-slate-800/30 transition">
             <td class="py-3 px-4 font-semibold text-white flex items-center gap-3">
@@ -272,10 +275,11 @@ function renderUsersTable(users) {
             <td class="py-3 px-4">
                 <div class="flex items-center gap-2">
                     <span class="font-mono text-indigo-300 text-[11px] bg-slate-900 border border-slate-800 px-2 py-1 rounded select-all" title="Clique para selecionar e copiar">${u.tag_uid || 'Sem Hash'}</span>
-                    <button onclick="generateAndAssignUID('${u.id}')" title="Gerar nova Hash aleatória para NDEF" class="px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded border border-indigo-500/30 transition text-[10px] flex items-center gap-1">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>Gerar Hash</span>
-                    </button>
+                    ${isSuperAdmin && u.tag_uid ? `
+                    <button onclick="copyHash(this, '${u.tag_uid}')" title="Copiar link com a Hash para gravação NDEF" class="px-2 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded border border-indigo-500/30 transition text-[10px] flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copiar Hash</span>
+                    </button>` : ''}
                 </div>
             </td>
             <td class="py-3 px-4">
@@ -302,33 +306,39 @@ function prepareUserEdit(userId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function generateRandomTagUID() {
-    const array = new Uint8Array(8);
-    crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
-}
+// Link gravado na TAG NDEF: base + Hash da pessoa (a Hash é gerada pela API ao salvar)
+const HASH_BASE_URL = "https://eventossistema.aproximeaqui.com.br/?";
 
-async function generateAndAssignUID(userId) {
-    const newUID = generateRandomTagUID();
-
-    if (!confirm(`Gerar novo UID/Hash para esta pessoa?\n\nNovo Hash: ${newUID}\n\nEste é o código que deverá ser gravado no NDEF da TAG.`)) {
-        return;
-    }
+async function copyHash(btn, hash) {
+    const link = `${HASH_BASE_URL}${hash}`;
 
     try {
-        const res = await fetch(buildApiUrl(`/v1/admin/users/${userId}/uid`), {
-            method: "PATCH",
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ tag_uid: newUID })
-        });
-
-        if (res.ok) {
-            loadUsers();
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(link);
         } else {
-            alert("Erro ao salvar o UID no servidor.");
+            // Fallback para contextos sem Clipboard API
+            const ta = document.createElement("textarea");
+            ta.value = link;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand("copy");
+            document.body.removeChild(ta);
+            if (!ok) throw new Error("copy failed");
         }
+
+        const label = btn.querySelector("span");
+        const icon = btn.querySelector("i");
+        const originalText = label.innerText;
+        label.innerText = "Copiado!";
+        icon.className = "fa-solid fa-check";
+        setTimeout(() => {
+            label.innerText = originalText;
+            icon.className = "fa-solid fa-copy";
+        }, 1500);
     } catch (err) {
-        alert("Erro de conexão ao vincular UID.");
+        window.prompt("Não foi possível copiar automaticamente. Copie o link abaixo:", link);
     }
 }
 
