@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,13 +12,15 @@
     <!-- Estilo Local -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="min-h-screen text-slate-200 flex flex-col">
 
     <!-- Topbar / Navbar -->
     <header class="glass-panel sticky top-0 z-30 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">
+                <div
+                    class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">
                     <i class="fa-solid fa-qrcode text-xl"></i>
                 </div>
                 <div>
@@ -27,8 +30,10 @@
             </div>
 
             <div class="flex items-center gap-4">
-                <span class="text-sm text-slate-400 hidden sm:inline-block" id="userEmail">admin@aproximeaqui.com.br</span>
-                <button onclick="handleLogout()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold transition flex items-center gap-2">
+                <span class="text-sm text-slate-400 hidden sm:inline-block"
+                    id="userEmail">admin@aproximeaqui.com.br</span>
+                <button onclick="handleLogout()"
+                    class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold transition flex items-center gap-2">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>Sair</span>
                 </button>
@@ -42,7 +47,8 @@
         <!-- Métricas Rápidas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xl">
+                <div
+                    class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xl">
                     <i class="fa-solid fa-building"></i>
                 </div>
                 <div>
@@ -52,7 +58,8 @@
             </div>
 
             <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl">
+                <div
+                    class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl">
                     <i class="fa-solid fa-calendar-check"></i>
                 </div>
                 <div>
@@ -62,7 +69,8 @@
             </div>
 
             <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl">
+                <div
+                    class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl">
                     <i class="fa-solid fa-id-card"></i>
                 </div>
                 <div>
@@ -72,7 +80,8 @@
             </div>
 
             <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xl">
+                <div
+                    class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xl">
                     <i class="fa-solid fa-bolt"></i>
                 </div>
                 <div>
@@ -98,11 +107,13 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
-                        <input type="text" id="searchInput" oninput="filterCompanies()" placeholder="Buscar por empresa, e-mail ou documento..." 
+                        <input type="text" id="searchInput" oninput="filterCompanies()"
+                            placeholder="Buscar por empresa, e-mail ou documento..."
                             class="w-full pl-9 pr-4 py-2.5 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                     </div>
 
-                    <button onclick="openCompanyModal()" class="py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 whitespace-nowrap">
+                    <button onclick="openCompanyModal()"
+                        class="py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 whitespace-nowrap">
                         <i class="fa-solid fa-plus"></i>
                         <span>Nova Empresa</span>
                     </button>
@@ -134,10 +145,12 @@
     </main>
 
     <!-- Modal: Cadastrar Nova Empresa -->
-    <div id="companyModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <!-- Subsitua o trecho do Modal no superadmineventos.html por este: -->
+    <div id="companyModal"
+        class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6">
             <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2" id="companyModalTitle">
                     <i class="fa-solid fa-building-circle-check text-indigo-400"></i>
                     Cadastrar Nova Empresa
                 </h3>
@@ -146,42 +159,52 @@
                 </button>
             </div>
 
-            <form id="companyForm" onsubmit="handleCreateCompany(event)" class="space-y-4">
+            <form id="companyForm" onsubmit="handleSaveCompany(event)" class="space-y-4">
+                <input type="hidden" id="companyId">
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome da Empresa / Evento *</label>
-                    <input type="text" id="companyName" required placeholder="Ex: Produções Ponta Grossa LTDA" 
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nome da
+                        Empresa / Evento *</label>
+                    <input type="text" id="companyName" required placeholder="Ex: Produções Ponta Grossa LTDA"
                         class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">E-mail de Login *</label>
-                    <input type="email" id="companyEmail" required placeholder="cliente@empresa.com" 
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">E-mail de
+                        Login *</label>
+                    <input type="email" id="companyEmail" required placeholder="cliente@empresa.com"
                         class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento (CNPJ/CPF - Opcional)</label>
-                    <input type="text" id="companyDocument" placeholder="00.000.000/0001-00" 
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Documento
+                        (CNPJ/CPF - Opcional)</label>
+                    <input type="text" id="companyDocument" placeholder="00.000.000/0001-00"
                         class="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Senha de Acesso *</label>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5"
+                        id="lblCompanyPassword">Senha de Acesso *</label>
                     <div class="relative">
-                        <input type="password" id="companyPassword" required placeholder="Defina a senha de login da empresa" 
+                        <input type="password" id="companyPassword" required
+                            placeholder="Defina a senha de login da empresa"
                             class="w-full pl-3.5 pr-20 py-2.5 bg-slate-900/80 border border-slate-700/60 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-                        <button type="button" onclick="generateRandomPassword()" class="absolute right-1 top-1 bottom-1 px-2.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-[10px] font-semibold rounded-lg transition">
+                        <button type="button" onclick="generateRandomPassword()"
+                            class="absolute right-1 top-1 bottom-1 px-2.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-[10px] font-semibold rounded-lg transition">
                             Gerar Senha
                         </button>
                     </div>
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3 border-t border-slate-800">
-                    <button type="button" onclick="closeCompanyModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800/50 text-slate-300 text-xs font-semibold transition">
+                    <button type="button" onclick="closeCompanyModal()"
+                        class="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800/50 text-slate-300 text-xs font-semibold transition">
                         Cancelar
                     </button>
-                    <button type="submit" id="btnSaveCompany" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
-                        <span>Salvar Empresa</span>
+                    <button type="submit" id="btnSaveCompany"
+                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                        <span id="btnSaveCompanyText">Salvar Empresa</span>
                     </button>
                 </div>
             </form>
@@ -194,4 +217,5 @@
         window.addEventListener("DOMContentLoaded", initSuperAdmin);
     </script>
 </body>
+
 </html>

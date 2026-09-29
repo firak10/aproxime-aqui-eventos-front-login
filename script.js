@@ -60,7 +60,7 @@ function togglePassword() {
 
 async function handleLogin(event) {
     event.preventDefault();
-    
+
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const errorMessage = document.getElementById("errorMessage");
@@ -655,40 +655,7 @@ async function toggleEventParticipant(eventId, userId, newStatus) {
 // 3. PAINEL SUPERADMIN (superadmineventos.html)
 // =========================================================================
 
-function initSuperAdmin() {
-    const token = localStorage.getItem("aproxime_token");
-    const role = localStorage.getItem("aproxime_role");
-
-    if (!token || role !== "superadmin") {
-        window.location.href = "/index.html";
-        return;
-    }
-
-    fetchCompanies();
-}
-
-async function fetchCompanies() {
-    const token = localStorage.getItem("aproxime_token");
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (response.ok) {
-            companiesList = await response.json();
-        } else {
-            companiesList = [];
-        }
-
-        renderCompanies(companiesList);
-        updateMetrics();
-
-    } catch (err) {
-        console.error("Erro ao carregar empresas:", err);
-        renderCompanies([]);
-    }
-}
+let companyFormMode = "create"; // 'create' | 'edit'
 
 function renderCompanies(list) {
     const tbody = document.getElementById("companiesTableBody");
@@ -714,8 +681,11 @@ function renderCompanies(list) {
                     ${c.active ? 'Ativa' : 'Inativa'}
                 </span>
             </td>
-            <td class="py-3 px-4 text-right">
-                <button onclick="toggleCompanyStatus('${c.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Alternar Status">
+            <td class="py-3 px-4 text-right flex items-center justify-end gap-2">
+                <button onclick="editCompany('${c.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 transition" title="Editar Empresa">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="toggleCompanyStatus('${c.id}', ${!c.active})" class="text-slate-400 hover:text-rose-400 p-1.5 transition" title="Alternar Status">
                     <i class="fa-solid fa-power-off"></i>
                 </button>
             </td>
@@ -723,67 +693,80 @@ function renderCompanies(list) {
     `).join("");
 }
 
-function updateMetrics() {
-    if (document.getElementById("totalCompanies")) {
-        document.getElementById("totalCompanies").innerText = companiesList.length;
-    }
-    if (document.getElementById("totalEvents")) {
-        document.getElementById("totalEvents").innerText = companiesList.length * 2;
-    }
-    if (document.getElementById("totalReads")) {
-        document.getElementById("totalReads").innerText = "1,420";
-    }
-}
+function openCompanyModal(mode = "create") {
+    companyFormMode = mode;
+    const titleEl = document.getElementById("companyModalTitle");
+    const btnText = document.getElementById("btnSaveCompanyText");
+    const pwdLabel = document.getElementById("lblCompanyPassword");
+    const pwdInput = document.getElementById("companyPassword");
 
-function filterCompanies() {
-    const query = document.getElementById("searchInput").value.toLowerCase();
-    const filtered = companiesList.filter(c => 
-        (c.name && c.name.toLowerCase().includes(query)) || 
-        (c.email && c.email.toLowerCase().includes(query)) ||
-        (c.document && c.document.includes(query))
-    );
-    renderCompanies(filtered);
-}
+    if (mode === "create") {
+        titleEl.innerHTML = `<i class="fa-solid fa-building-circle-check text-indigo-400"></i> Cadastrar Nova Empresa`;
+        btnText.innerText = "Salvar Empresa";
+        pwdLabel.innerText = "Senha de Acesso *";
+        pwdInput.required = true;
+        pwdInput.placeholder = "Defina a senha de login da empresa";
+        document.getElementById("companyForm").reset();
+        document.getElementById("companyId").value = "";
+    } else {
+        titleEl.innerHTML = `<i class="fa-solid fa-building-circle-gear text-indigo-400"></i> Editar Empresa`;
+        btnText.innerText = "Atualizar Empresa";
+        pwdLabel.innerText = "Nova Senha (deixe em branco para manter a atual)";
+        pwdInput.required = false;
+        pwdInput.placeholder = "Preencha apenas se quiser alterar a senha";
+    }
 
-function openCompanyModal() {
     document.getElementById("companyModal").classList.remove("hidden");
+}
+
+function editCompany(companyId) {
+    const company = companiesList.find(c => c.id === companyId || String(c.id) === String(companyId));
+    if (!company) return;
+
+    openCompanyModal("edit");
+    document.getElementById("companyId").value = company.id;
+    document.getElementById("companyName").value = company.name || "";
+    document.getElementById("companyEmail").value = company.email || "";
+    document.getElementById("companyDocument").value = company.document || "";
+    document.getElementById("companyPassword").value = "";
 }
 
 function closeCompanyModal() {
     document.getElementById("companyModal").classList.add("hidden");
     document.getElementById("companyForm").reset();
+    document.getElementById("companyId").value = "";
 }
 
-function generateRandomPassword() {
-    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$";
-    let result = "";
-    for (let i = 0; i < 10; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    const passInput = document.getElementById("companyPassword");
-    passInput.type = "text";
-    passInput.value = result;
-}
-
-async function handleCreateCompany(event) {
+async function handleSaveCompany(event) {
     event.preventDefault();
 
     const token = localStorage.getItem("aproxime_token");
     const btn = document.getElementById("btnSaveCompany");
+    const companyId = document.getElementById("companyId").value;
+    const passwordValue = document.getElementById("companyPassword").value;
 
     const payload = {
-        name: document.getElementById("companyName").value,
-        email: document.getElementById("companyEmail").value,
-        document: document.getElementById("companyDocument").value || null,
-        password: document.getElementById("companyPassword").value
+        name: document.getElementById("companyName").value.trim(),
+        email: document.getElementById("companyEmail").value.trim(),
+        document: document.getElementById("companyDocument").value.trim() || null
     };
 
+    if (passwordValue) {
+        payload.password = passwordValue;
+    }
+
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...`;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processando...`;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
-            method: "POST",
+        const url = companyFormMode === "create"
+            ? `${API_BASE_URL}/v1/superadmin/companies`
+            : `${API_BASE_URL}/v1/superadmin/companies/${companyId}`;
+
+        const method = companyFormMode === "create" ? "POST" : "PUT";
+
+        const response = await fetch(url, {
+            method: method,
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
@@ -793,7 +776,7 @@ async function handleCreateCompany(event) {
 
         if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.detail || "Erro ao cadastrar empresa.");
+            throw new Error(errData.detail || "Erro ao salvar empresa.");
         }
 
         closeCompanyModal();
@@ -803,6 +786,29 @@ async function handleCreateCompany(event) {
         alert(err.message);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = `<span>Salvar Empresa</span>`;
+        btn.innerHTML = `<span id="btnSaveCompanyText">${companyFormMode === 'create' ? 'Salvar Empresa' : 'Atualizar Empresa'}</span>`;
+    }
+}
+
+async function toggleCompanyStatus(companyId, newActiveStatus) {
+    const token = localStorage.getItem("aproxime_token");
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies/${companyId}/status`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ active: newActiveStatus })
+        });
+
+        if (response.ok) {
+            fetchCompanies();
+        } else {
+            alert("Erro ao alterar o status da empresa.");
+        }
+    } catch (err) {
+        alert("Erro de conexão ao alterar status da empresa.");
     }
 }
