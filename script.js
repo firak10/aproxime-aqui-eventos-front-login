@@ -812,3 +812,80 @@ async function toggleCompanyStatus(companyId, newActiveStatus) {
         alert("Erro de conexão ao alterar status da empresa.");
     }
 }
+
+
+// =========================================================================
+// INICIALIZAÇÃO E AUXILIARES DO SUPERADMIN
+// =========================================================================
+
+async function initSuperAdmin() {
+    const token = localStorage.getItem("aproxime_token");
+    const role = localStorage.getItem("aproxime_role");
+
+    if (!token || role !== "superadmin") {
+        window.location.href = "/index.html";
+        return;
+    }
+
+    await fetchCompanies();
+}
+
+async function fetchCompanies() {
+    const token = localStorage.getItem("aproxime_token");
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/v1/superadmin/companies`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = "/index.html";
+                return;
+            }
+            throw new Error("Erro ao buscar empresas.");
+        }
+
+        companiesList = await response.json();
+        
+        // Atualiza contadores do topo
+        const totalCompaniesEl = document.getElementById("totalCompanies");
+        if (totalCompaniesEl) {
+            totalCompaniesEl.innerText = companiesList.length;
+        }
+
+        renderCompanies(companiesList);
+    } catch (err) {
+        console.error("Erro ao carregar lista de empresas:", err);
+    }
+}
+
+function filterCompanies() {
+    const input = document.getElementById("searchInput");
+    if (!input) return;
+
+    const term = input.value.toLowerCase().trim();
+    const filtered = companiesList.filter(c => {
+        const nameMatch = c.name ? c.name.toLowerCase().includes(term) : false;
+        const emailMatch = c.email ? c.email.toLowerCase().includes(term) : false;
+        const docMatch = c.document ? c.document.toLowerCase().includes(term) : false;
+        return nameMatch || emailMatch || docMatch;
+    });
+
+    renderCompanies(filtered);
+}
+
+function generateRandomPassword() {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+    let password = "";
+    for (let i = 0; i < 10; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const pwdInput = document.getElementById("companyPassword");
+    if (pwdInput) {
+        pwdInput.value = password;
+        pwdInput.type = "text"; // Exibe temporariamente para facilitar cópia se necessário
+    }
+}
